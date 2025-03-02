@@ -12,6 +12,7 @@
 
 .bodyHead {
     min-width: 100%;
+    height: 36%;
     min-height: 36%;
     display: flex;
     background-color: #283618;
@@ -40,7 +41,7 @@
     color: #ffffff;
     margin-bottom: 1vh;
     grid-column-start: 2;
-    padding-left: 3vh;
+    margin-left: 3vh;
 }
 
 .regSub {
@@ -50,8 +51,7 @@
     color: rgba(255, 255, 255, 0.6);
     margin-bottom: 2vh;
     grid-column-start: 2;
-    padding-left: 3vh;
-
+    margin-left: 3vh;
 }
 
 .logoContainer {
@@ -64,4 +64,35 @@
 .loginContainer {
     display: flex;
     justify-content: center;
+}
+
+.subLogin {
+    display: grid;
+    grid-template-columns: 1fr 66% 1fr;
+    position: absolute;
+    width: 100%;
+    align-self: flex-end;
+    flex-direction: column;
+}
+
+.buttonContainer {
+    grid-column-start: 2;
+    padding-top: 3vh;
+    text-align: center;
+}
+
+.button {
+    margin-bottom: 1vh;
+}
+
+.checkboxContainer {
+    padding-right: 25%;
+}
+
+.checkbox {
+    align-items: center;
+}
+
+.loginButton {
+    text-align: center;
 }
