@@ -1,0 +1,67 @@
+.loginBackground {
+    display: flex;
+    min-height: 100%;
+    min-width: 100%;
+    position: absolute;
+    flex-direction: column;
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    right: 0px;
+}
+
+.bodyHead {
+    min-width: 100%;
+    min-height: 36%;
+    display: flex;
+    background-color: #283618;
+}
+
+.bodyLeg {
+    width: 100%;
+    height: 64%;
+    display: block;
+    background-color: #fefae0;
+}
+
+.mainLogin {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    position: absolute;
+    width: 100%;
+    align-self: flex-end;
+    flex-direction: column;
+}
+
+.reg {
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 39px;
+    color: #ffffff;
+    margin-bottom: 1vh;
+    grid-column-start: 2;
+    padding-left: 3vh;
+}
+
+.regSub {
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 24px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 2vh;
+    grid-column-start: 2;
+    padding-left: 3vh;
+
+}
+
+.logoContainer {
+    display: inline-block;
+    width: fit-content;
+    height: fit-content;
+    position: absolute;
+}
+
+.loginContainer {
+    display: flex;
+    justify-content: center;
+}
