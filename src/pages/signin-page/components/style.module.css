@@ -52,6 +52,7 @@
     margin-bottom: 2vh;
     grid-column-start: 2;
     margin-left: 3vh;
+    white-space: nowrap;
 }
 
 .logoContainer {
@@ -85,6 +86,14 @@
     margin-bottom: 1vh;
 }
 
+.checkboxContainer {
+    padding-right: 25%;
+}
+
+.checkbox {
+    align-items: center;
+}
+
 .loginButton {
     text-align: center;
 }
@@ -95,5 +104,4 @@
     opacity: 60%;
     margin-top: 3vh;
     padding-right: 30%;
-    white-space: nowrap;
 }

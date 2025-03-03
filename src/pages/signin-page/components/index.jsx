@@ -16,7 +16,7 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import { Link } from "react-router-dom";
 
-export function LoginBack() {
+export function SignBack() {
     const [showPassword, setShowPassword] = React.useState(false);
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event) => event.preventDefault();
@@ -32,8 +32,8 @@ export function LoginBack() {
                 </div>
                 <div className={styles.bodyHead}>
                     <div className={styles.mainLogin}>
-                        <span className={styles.reg}>Зарегистрироваться</span>
-                        <span className={styles.regSub}>Начать бесплатно</span>
+                        <span className={styles.reg}>Вход</span>
+                        <span className={styles.regSub}>С возвращением</span>
                     </div>
                 </div>
                 <div className={styles.bodyLeg}>
@@ -61,45 +61,6 @@ export function LoginBack() {
                                 >
                                     <TextField
                                         label="Имя пользователя"
-                                        variant="outlined"
-                                        color="#606C38"
-                                        sx={{
-                                            "& .MuiOutlinedInput-root": {
-                                                fontSize: "20px",
-                                                borderRadius: "10px",
-                                                padding: "3px",
-                                            },
-                                            "& .MuiInputLabel-root": {
-                                                fontFamily:
-                                                    '"Roboto", sans-serif',
-                                                fontSize: "20px",
-                                            },
-                                        }}
-                                    />
-                                </Box>
-                            </div>
-                            <div className={styles.button}>
-                                <Box
-                                    component="form"
-                                    sx={{
-                                        "& > :not(style)": {
-                                            m: 1,
-                                            width: {
-                                                xs: "100%",
-                                                sm: "80%",
-                                                md: "60%",
-                                                lg: "46%",
-                                            },
-                                            backgroundColor: "white",
-                                            borderRadius: "10px",
-                                            fontSize: "18px",
-                                        },
-                                    }}
-                                    noValidate
-                                    autoComplete="off"
-                                >
-                                    <TextField
-                                        label="Email"
                                         variant="outlined"
                                         color="#606C38"
                                         sx={{
@@ -194,6 +155,41 @@ export function LoginBack() {
                                     </FormControl>
                                 </Box>
                             </div>
+                            <div
+                                className={styles.checkboxContainer}
+                                sx={{
+                                    width: {
+                                        xs: "100%",
+                                        sm: "80%",
+                                        md: "60%",
+                                        lg: "46%",
+                                    },
+                                }}
+                            >
+                                <FormGroup className={styles.checkbox}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                sx={{
+                                                    color: "#606C38",
+                                                    "&.Mui-checked": {
+                                                        color: "#606C38",
+                                                    },
+                                                }}
+                                            />
+                                        }
+                                        label="Запомнить данные"
+                                        sx={{
+                                            "& .MuiFormControlLabel-label": {
+                                                fontFamily:
+                                                    '"Roboto", sans-serif',
+                                                fontSize: "20px",
+                                                opacity: "60%",
+                                            },
+                                        }}
+                                    />
+                                </FormGroup>
+                            </div>
                             <div className={styles.loginButton}>
                                 <Stack>
                                     <Button
@@ -222,13 +218,13 @@ export function LoginBack() {
                             </div>
                             <div className={styles.already}>
                                 <Link
-                                    to="/sign"
+                                    to="/login"
                                     style={{
                                         textDecoration: "none",
                                         color: "black",
                                     }}
                                 >
-                                    Уже есть аккаунт?
+                                    Нет аккаунта?
                                 </Link>
                             </div>
                         </div>
