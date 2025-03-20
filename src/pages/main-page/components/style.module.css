@@ -1,0 +1,43 @@
+.loginBackground {
+    display: flex;
+    min-height: 100%;
+    min-width: 100%;
+    position: absolute;
+    flex-direction: column;
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    right: 0px;
+}
+
+.bodyHead {
+    min-width: 100%;
+    height: 36%;
+    min-height: 36%;
+    display: flex;
+    background-color: #283618;
+}
+
+.bodyLeg {
+    width: 100%;
+    height: 64%;
+    display: block;
+    background-color: #fefae0;
+}
+
+.logoContainer {
+    display: inline-block;
+    width: fit-content;
+    height: fit-content;
+    position: absolute;
+}
+
+.logo {
+    display: flex;
+    justify-content: center;
+}
+
+.textStyle {
+    color: white;
+    
+}

@@ -196,28 +196,40 @@ export function LoginBack() {
                             </div>
                             <div className={styles.loginButton}>
                                 <Stack>
-                                    <Button
-                                        variant="contained"
-                                        sx={{
-                                            alignSelf: "center",
-                                            backgroundColor: "#606C38",
-                                            "&:hover": {
-                                                backgroundColor: "#4F5A2E",
-                                            },
-                                            height: "6vh",
-                                            fontFamily: '"Roboto", sans-serif',
-                                            fontSize: "20px",
-                                            marginTop: "2vh",
-                                            width: {
-                                                xs: "100%",
-                                                sm: "80%",
-                                                md: "60%",
-                                                lg: "46%",
-                                            },
-                                        }}
-                                    >
-                                        Продолжить
-                                    </Button>
+                                    <div>
+                                        <Link
+                                            to="/loginwho"
+                                            style={{
+                                                textDecoration: "none",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <Button
+                                                variant="contained"
+                                                sx={{
+                                                    alignSelf: "center",
+                                                    backgroundColor: "#606C38",
+                                                    "&:hover": {
+                                                        backgroundColor:
+                                                            "#4F5A2E",
+                                                    },
+                                                    height: "6vh",
+                                                    fontFamily:
+                                                        '"Roboto", sans-serif',
+                                                    fontSize: "20px",
+                                                    marginTop: "2vh",
+                                                    width: {
+                                                        xs: "100%",
+                                                        sm: "80%",
+                                                        md: "60%",
+                                                        lg: "46%",
+                                                    },
+                                                }}
+                                            >
+                                                Продолжить
+                                            </Button>
+                                        </Link>
+                                    </div>
                                 </Stack>
                             </div>
                             <div className={styles.already}>
