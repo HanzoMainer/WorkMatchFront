@@ -30,7 +30,7 @@ export function SignBack() {
                         <img src="/Logo.svg" alt="Логотип" />
                     </div>
                 </div>
-                <div className={styles.bodyHead}>
+                    <div className={styles.bodyHead}>
                     <div className={styles.mainLogin}>
                         <span className={styles.reg}>Вход</span>
                         <span className={styles.regSub}>С возвращением</span>
