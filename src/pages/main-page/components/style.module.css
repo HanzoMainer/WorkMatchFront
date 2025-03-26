@@ -13,33 +13,38 @@
 .bodyHead {
     min-width: 100%;
     min-height: 10%;
-    display: flex;
+    display: grid;
     background-color: #283618;
-    align-items: center;
-    justify-content: center;
+    grid-template-columns: 1fr 33% 1fr;
 }
 
 .bodyLeg {
     width: 100%;
     height: 90%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: 1fr 66% 1fr;
+    display: grid;
+    justify-items: center;
     background-color: #fefae0;
     padding-top: 20px;
 }
 
+.logo {
+    display: flex;
+    align-content: center;
+    justify-content: start;
+    grid-column-start: 1;
+}
+
 .logoContainer {
-    display: inline-block;
     width: fit-content;
     height: fit-content;
-    position: absolute;
+    position:relative;
+    align-self: center;
     padding-left: 2%;
 }
 
-.logo {
-    display: flex;
-    justify-content: start;
+.logoPhoto {
+    width: 50%;
 }
 
 .textStyle {
@@ -49,8 +54,16 @@
 .jobList {
     width: 80%;
     display: flex;
+    grid-column-start: 2;
     flex-direction: column;
     gap: 15px;
+}
+
+.font1 {
+    font-size: xx-large;
+    color: #283618;
+    font-weight: 900;
+    margin: 0%;
 }
 
 .jobCard {
@@ -76,6 +89,8 @@
     color: #606c38;
 }
 
-.logoPhoto {
-    width: 50%;
+.searchBar {
+    display: flex;
+    grid-column-start: 2;
+    justify-content: center;
 }

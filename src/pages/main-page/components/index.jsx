@@ -1,9 +1,8 @@
 import styles from "./style.module.css";
 import { Link } from "react-router-dom";
 import * as React from "react";
+import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
-import Stack from "@mui/material/Stack";
-import Autocomplete from "@mui/material/Autocomplete";
 
 export function MainBack() {
     const jobs = [
@@ -27,23 +26,9 @@ export function MainBack() {
         },
     ];
 
-    const [inputValue, setInputValue] = useState("");
-    const [options, setOptions] = useState([]);
-
-    useEffect(() => {
-        if (inputValue.length > 0) {
-            fetch(`http://localhost:8000/search?q=${inputValue}`)
-                .then((res) => res.json())
-                .then((data) => setOptions(data))
-                .catch((err) => console.error("Error fetching data:", err));
-        } else {
-            setOptions([]);
-        }
-    }, [inputValue]);
-
     return (
         <div className={styles.loginBackground}>
-            <div className={styles.logo}>
+            <div className={styles.bodyHead}>
                 <div className={styles.logoContainer}>
                     <Link to="/main">
                         <img
@@ -54,33 +39,50 @@ export function MainBack() {
                         />
                     </Link>
                 </div>
-            </div>
-            <div className={styles.bodyHead}>
-                <div>
-                    <Stack spacing={2} sx={{ width: 300 }}>
-                        <Autocomplete
-                            freeSolo
-                            id="free-solo-2-demo"
-                            disableClearable
-                            options={top100Films.map((option) => option.title)}
-                            renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    label="Search input"
-                                    slotProps={{
-                                        input: {
-                                            ...params.InputProps,
-                                            type: "search",
-                                        },
-                                    }}
-                                />
-                            )}
+                <div className={styles.searchBar}>
+                    <Box
+                        component="form"
+                        sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            "& > :not(style)": {
+                                m: 1,
+                                width: {
+                                    xs: "100%",
+                                    sm: "80%",
+                                    md: "60%",
+                                    lg: "46%",
+                                },
+                                backgroundColor: "white",
+                                borderRadius: "10px",
+                                fontSize: "18px",
+                            },
+                        }}
+                        noValidate
+                        autoComplete="off"
+                    >
+                        <TextField
+                            label="Поиск"
+                            variant="outlined"
+                            color="#606C38"
+                            sx={{
+                                "& .MuiOutlinedInput-root": {
+                                    fontSize: "20px",
+                                    borderRadius: "10px",
+                                    padding: "3px",
+                                },
+                                "& .MuiInputLabel-root": {
+                                    fontFamily: '"Roboto", sans-serif',
+                                    fontSize: "20px",
+                                },
+                            }}
                         />
-                    </Stack>
+                    </Box>
                 </div>
             </div>
             <div className={styles.bodyLeg}>
                 <div className={styles.jobList}>
+                    <p className={styles.font1}>Вакансии сейчас</p>
                     {jobs.map((job) => (
                         <div key={job.id} className={styles.jobCard}>
                             <h2>{job.title}</h2>
