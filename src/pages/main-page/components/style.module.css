@@ -88,9 +88,3 @@
     margin: 5px 0 0;
     color: #606c38;
 }
-
-.searchBar {
-    display: flex;
-    grid-column-start: 2;
-    justify-content: center;
-}

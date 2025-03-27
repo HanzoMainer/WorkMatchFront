@@ -39,46 +39,6 @@ export function MainBack() {
                         />
                     </Link>
                 </div>
-                <div className={styles.searchBar}>
-                    <Box
-                        component="form"
-                        sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            "& > :not(style)": {
-                                m: 1,
-                                width: {
-                                    xs: "100%",
-                                    sm: "80%",
-                                    md: "60%",
-                                    lg: "46%",
-                                },
-                                backgroundColor: "white",
-                                borderRadius: "10px",
-                                fontSize: "18px",
-                            },
-                        }}
-                        noValidate
-                        autoComplete="off"
-                    >
-                        <TextField
-                            label="Поиск"
-                            variant="outlined"
-                            color="#606C38"
-                            sx={{
-                                "& .MuiOutlinedInput-root": {
-                                    fontSize: "20px",
-                                    borderRadius: "10px",
-                                    padding: "3px",
-                                },
-                                "& .MuiInputLabel-root": {
-                                    fontFamily: '"Roboto", sans-serif',
-                                    fontSize: "20px",
-                                },
-                            }}
-                        />
-                    </Box>
-                </div>
             </div>
             <div className={styles.bodyLeg}>
                 <div className={styles.jobList}>
