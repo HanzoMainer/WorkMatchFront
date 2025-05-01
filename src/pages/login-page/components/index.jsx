@@ -1,10 +1,6 @@
-    import styles from "./style.module.css";
-import * as React from "react";
+import styles from "./style.module.css";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
-import Checkbox from "@mui/material/Checkbox";
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import FormControl from "@mui/material/FormControl";
@@ -14,13 +10,54 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export function LoginBack() {
-    const [showPassword, setShowPassword] = React.useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    const navigate = useNavigate();
+
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event) => event.preventDefault();
     const handleMouseUpPassword = (event) => event.preventDefault();
+
+    const handleSubmit = async () => {
+        const userData = {
+            email,
+            password,
+            username,
+            full_name: username,
+            role: "user",
+        };
+
+        try {
+            const response = await fetch("http://192.168.1.119:8000/v1/users/", {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(userData),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log("Успешная регистрация:", result);
+                navigate("/main");
+            } else {
+                const error = await response.json();
+                console.error("Ошибка регистрации:", error);
+                alert("Ошибка регистрации: " + error.detail);
+            }
+        } catch (error) {
+            console.error("Ошибка соединения:", error);
+            alert("Сервер недоступен");
+        }
+    };
 
     return (
         <>
@@ -33,7 +70,7 @@ export function LoginBack() {
                 <div className={styles.bodyHead}>
                     <div className={styles.mainLogin}>
                         <span className={styles.reg}>Зарегистрироваться</span>
-                        <span className={styles.regSub}>Начать бесплатно</span>
+                        <span className={styles.regSub}>Найти работу</span>
                     </div>
                 </div>
                 <div className={styles.bodyLeg}>
@@ -62,7 +99,10 @@ export function LoginBack() {
                                     <TextField
                                         label="Имя пользователя"
                                         variant="outlined"
-                                        color="#606C38"
+                                        value={username}
+                                        onChange={(e) =>
+                                            setUsername(e.target.value)
+                                        }
                                         sx={{
                                             "& .MuiOutlinedInput-root": {
                                                 fontSize: "20px",
@@ -101,7 +141,10 @@ export function LoginBack() {
                                     <TextField
                                         label="Email"
                                         variant="outlined"
-                                        color="#606C38"
+                                        value={email}
+                                        onChange={(e) =>
+                                            setEmail(e.target.value)
+                                        }
                                         sx={{
                                             "& .MuiOutlinedInput-root": {
                                                 fontSize: "20px",
@@ -150,7 +193,6 @@ export function LoginBack() {
                                             },
                                         }}
                                         variant="outlined"
-                                        color="#606C38"
                                     >
                                         <InputLabel htmlFor="outlined-adornment-password">
                                             Пароль
@@ -161,6 +203,10 @@ export function LoginBack() {
                                                 showPassword
                                                     ? "text"
                                                     : "password"
+                                            }
+                                            value={password}
+                                            onChange={(e) =>
+                                                setPassword(e.target.value)
                                             }
                                             endAdornment={
                                                 <InputAdornment position="start">
@@ -196,40 +242,29 @@ export function LoginBack() {
                             </div>
                             <div className={styles.loginButton}>
                                 <Stack>
-                                    <div>
-                                        <Link
-                                            to="/loginwho"
-                                            style={{
-                                                textDecoration: "none",
-                                                color: "white",
-                                            }}
-                                        >
-                                            <Button
-                                                variant="contained"
-                                                sx={{
-                                                    alignSelf: "center",
-                                                    backgroundColor: "#606C38",
-                                                    "&:hover": {
-                                                        backgroundColor:
-                                                            "#4F5A2E",
-                                                    },
-                                                    height: "6vh",
-                                                    fontFamily:
-                                                        '"Roboto", sans-serif',
-                                                    fontSize: "20px",
-                                                    marginTop: "2vh",
-                                                    width: {
-                                                        xs: "100%",
-                                                        sm: "80%",
-                                                        md: "60%",
-                                                        lg: "46%",
-                                                    },
-                                                }}
-                                            >
-                                                Продолжить
-                                            </Button>
-                                        </Link>
-                                    </div>
+                                    <Button
+                                        variant="contained"
+                                        onClick={handleSubmit}
+                                        sx={{
+                                            alignSelf: "center",
+                                            backgroundColor: "#606C38",
+                                            "&:hover": {
+                                                backgroundColor: "#4F5A2E",
+                                            },
+                                            height: "6vh",
+                                            fontFamily: '"Roboto", sans-serif',
+                                            fontSize: "20px",
+                                            marginTop: "2vh",
+                                            width: {
+                                                xs: "100%",
+                                                sm: "80%",
+                                                md: "60%",
+                                                lg: "46%",
+                                            },
+                                        }}
+                                    >
+                                        Продолжить
+                                    </Button>
                                 </Stack>
                             </div>
                             <div className={styles.already}>
