@@ -1,6 +1,5 @@
 import styles from "./style.module.css";
-import * as React from "react";
-import Box from "@mui/material/Box";
+import { useState } from "react";
 import TextField from "@mui/material/TextField";
 import Checkbox from "@mui/material/Checkbox";
 import FormGroup from "@mui/material/FormGroup";
@@ -17,9 +16,9 @@ import Stack from "@mui/material/Stack";
 import { Link, useNavigate } from "react-router-dom";
 
 export function SignBack() {
-    const [showPassword, setShowPassword] = React.useState(false);
-    const [email, setEmail] = React.useState("");
-    const [password, setPassword] = React.useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const navigate = useNavigate();
 
     const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -34,7 +33,7 @@ export function SignBack() {
 
         try {
             const response = await fetch(
-                "http://192.168.1.119:8000/v1/users/login/",
+                "http://localhost:8000/v1/users/login/",
                 {
                     method: "POST",
                     headers: {

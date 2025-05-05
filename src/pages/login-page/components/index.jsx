@@ -35,7 +35,7 @@ export function LoginBack() {
         };
 
         try {
-            const response = await fetch("http://192.168.1.119:8000/v1/users/", {
+            const response = await fetch("http://localhost:8000/v1/users/", {
                 method: "POST",
                 headers: {
                     Accept: "application/json",
