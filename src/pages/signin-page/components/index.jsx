@@ -1,6 +1,5 @@
 import styles from "./style.module.css";
-import * as React from "react";
-import Box from "@mui/material/Box";
+import { useState, useEffect, useContext} from "react";
 import TextField from "@mui/material/TextField";
 import Checkbox from "@mui/material/Checkbox";
 import FormGroup from "@mui/material/FormGroup";
@@ -14,13 +13,62 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../../../context/AuthContext";
 
 export function SignBack() {
-    const [showPassword, setShowPassword] = React.useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const navigate = useNavigate();
+    const { login, isAuthenticated } = useContext(AuthContext);
+    const [setSuccess] = useState(null);
+
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event) => event.preventDefault();
     const handleMouseUpPassword = (event) => event.preventDefault();
+
+    const handleLogin = async () => {
+        const loginData = {
+            email,
+            password,
+        };
+
+        try {
+            const response = await fetch(
+                "http://localhost:8000/v1/users/login/",
+                {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(loginData),
+                }
+            );
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log("Успешный вход:", result);
+                login(result.access_token, result.refresh_token);
+                setSuccess("Вход успешен!");
+                setTimeout(() => navigate("/main"), 0);
+            } else {
+                const error = await response.json();
+                console.error("Ошибка входа:", error);
+                alert("Ошибка входа: " + error.detail);
+            }
+        } catch (error) {
+            console.error("Ошибка соединения:", error);
+            alert("Сервер недоступен");
+        }
+    };
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/main", { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
 
     return (
         <>
@@ -30,7 +78,7 @@ export function SignBack() {
                         <img src="/Logo.svg" alt="Логотип" />
                     </div>
                 </div>
-                    <div className={styles.bodyHead}>
+                <div className={styles.bodyHead}>
                     <div className={styles.mainLogin}>
                         <span className={styles.reg}>Вход</span>
                         <span className={styles.regSub}>С возвращением</span>
@@ -40,132 +88,95 @@ export function SignBack() {
                     <div className={styles.subLogin}>
                         <div className={styles.buttonContainer}>
                             <div className={styles.button}>
-                                <Box
-                                    component="form"
+                                <TextField
+                                    label="Email"
+                                    variant="outlined"
+                                    fullWidth
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     sx={{
-                                        "& > :not(style)": {
-                                            m: 1,
-                                            width: {
-                                                xs: "100%",
-                                                sm: "80%",
-                                                md: "60%",
-                                                lg: "46%",
-                                            },
-                                            backgroundColor: "white",
+                                        m: 1,
+                                        width: {
+                                            xs: "100%",
+                                            sm: "80%",
+                                            md: "60%",
+                                            lg: "46%",
+                                        },
+                                        backgroundColor: "white",
+                                        "& .MuiOutlinedInput-root": {
+                                            fontSize: "20px",
                                             borderRadius: "10px",
-                                            fontSize: "18px",
+                                            padding: "3px",
+                                        },
+                                        "& .MuiInputLabel-root": {
+                                            fontFamily: '"Roboto", sans-serif',
+                                            fontSize: "20px",
                                         },
                                     }}
-                                    noValidate
-                                    autoComplete="off"
-                                >
-                                    <TextField
-                                        label="Имя пользователя"
-                                        variant="outlined"
-                                        color="#606C38"
-                                        sx={{
-                                            "& .MuiOutlinedInput-root": {
-                                                fontSize: "20px",
-                                                borderRadius: "10px",
-                                                padding: "3px",
-                                            },
-                                            "& .MuiInputLabel-root": {
-                                                fontFamily:
-                                                    '"Roboto", sans-serif',
-                                                fontSize: "20px",
-                                            },
-                                        }}
-                                    />
-                                </Box>
+                                />
                             </div>
                             <div className={styles.button}>
-                                <Box
-                                    component="form"
+                                <FormControl
                                     sx={{
-                                        "& > :not(style)": {
-                                            m: 1,
-                                            width: {
-                                                xs: "100%",
-                                                sm: "80%",
-                                                md: "60%",
-                                                lg: "46%",
-                                            },
-                                            backgroundColor: "white",
+                                        m: 1,
+                                        width: {
+                                            xs: "100%",
+                                            sm: "80%",
+                                            md: "60%",
+                                            lg: "46%",
+                                        },
+                                        backgroundColor: "white",
+                                        "& .MuiOutlinedInput-root": {
+                                            fontSize: "20px",
+                                            borderRadius: "10px",
+                                            padding: "3px",
+                                        },
+                                        "& .MuiInputLabel-root": {
+                                            fontFamily: '"Roboto", sans-serif',
+                                            fontSize: "20px",
                                         },
                                     }}
-                                    noValidate
-                                    autoComplete="off"
+                                    variant="outlined"
                                 >
-                                    <FormControl
-                                        sx={{
-                                            width: "100%",
-                                            "& .MuiOutlinedInput-root": {
-                                                fontSize: "20px",
-                                                borderRadius: "10px",
-                                                padding: "3px",
-                                            },
-                                            "& .MuiInputLabel-root": {
-                                                fontFamily:
-                                                    '"Roboto", sans-serif',
-                                                fontSize: "20px",
-                                            },
-                                        }}
-                                        variant="outlined"
-                                        color="#606C38"
-                                    >
-                                        <InputLabel htmlFor="outlined-adornment-password">
-                                            Пароль
-                                        </InputLabel>
-                                        <OutlinedInput
-                                            id="outlined-adornment-password"
-                                            type={
-                                                showPassword
-                                                    ? "text"
-                                                    : "password"
-                                            }
-                                            endAdornment={
-                                                <InputAdornment position="start">
-                                                    <IconButton
-                                                        aria-label={
-                                                            showPassword
-                                                                ? "Скрыть пароль"
-                                                                : "Показать пароль"
-                                                        }
-                                                        onClick={
-                                                            handleClickShowPassword
-                                                        }
-                                                        onMouseDown={
-                                                            handleMouseDownPassword
-                                                        }
-                                                        onMouseUp={
-                                                            handleMouseUpPassword
-                                                        }
-                                                        edge="end"
-                                                    >
-                                                        {showPassword ? (
-                                                            <VisibilityOff />
-                                                        ) : (
-                                                            <Visibility />
-                                                        )}
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            }
-                                            label="Пароль"
-                                        />
-                                    </FormControl>
-                                </Box>
+                                    <InputLabel htmlFor="outlined-adornment-password">
+                                        Пароль
+                                    </InputLabel>
+                                    <OutlinedInput
+                                        id="outlined-adornment-password"
+                                        type={
+                                            showPassword ? "text" : "password"
+                                        }
+                                        value={password}
+                                        onChange={(e) =>
+                                            setPassword(e.target.value)
+                                        }
+                                        endAdornment={
+                                            <InputAdornment position="start">
+                                                <IconButton
+                                                    onClick={
+                                                        handleClickShowPassword
+                                                    }
+                                                    onMouseDown={
+                                                        handleMouseDownPassword
+                                                    }
+                                                    onMouseUp={
+                                                        handleMouseUpPassword
+                                                    }
+                                                    edge="end"
+                                                >
+                                                    {showPassword ? (
+                                                        <VisibilityOff />
+                                                    ) : (
+                                                        <Visibility />
+                                                    )}
+                                                </IconButton>
+                                            </InputAdornment>
+                                        }
+                                        label="Пароль"
+                                    />
+                                </FormControl>
                             </div>
-                            <div
-                                className={styles.checkboxContainer}
-                                sx={{
-                                    width: {
-                                        xs: "100%",
-                                        sm: "80%",
-                                        md: "60%",
-                                        lg: "46%",
-                                    },
-                                }}
-                            >
+                            <div className={styles.checkboxContainer}>
                                 <FormGroup className={styles.checkbox}>
                                     <FormControlLabel
                                         control={
@@ -193,6 +204,7 @@ export function SignBack() {
                             <div className={styles.loginButton}>
                                 <Stack>
                                     <Button
+                                        onClick={handleLogin}
                                         variant="contained"
                                         sx={{
                                             alignSelf: "center",
