@@ -1,5 +1,5 @@
 import styles from "./style.module.css";
-import { useState } from "react";
+import { useState, useEffect, useContext} from "react";
 import TextField from "@mui/material/TextField";
 import Checkbox from "@mui/material/Checkbox";
 import FormGroup from "@mui/material/FormGroup";
@@ -14,12 +14,15 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../../../context/AuthContext";
 
 export function SignBack() {
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const navigate = useNavigate();
+    const { login, isAuthenticated } = useContext(AuthContext);
+    const [setSuccess] = useState(null);
 
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event) => event.preventDefault();
@@ -47,9 +50,9 @@ export function SignBack() {
             if (response.ok) {
                 const result = await response.json();
                 console.log("Успешный вход:", result);
-                localStorage.setItem("access_token", result.access_token);
-                localStorage.setItem("refresh_token", result.refresh_token);
-                navigate("/main");
+                login(result.access_token, result.refresh_token);
+                setSuccess("Вход успешен!");
+                setTimeout(() => navigate("/main"), 0);
             } else {
                 const error = await response.json();
                 console.error("Ошибка входа:", error);
@@ -60,6 +63,12 @@ export function SignBack() {
             alert("Сервер недоступен");
         }
     };
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/main", { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
 
     return (
         <>
