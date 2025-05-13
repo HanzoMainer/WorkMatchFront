@@ -22,9 +22,9 @@ import {
     Settings as SettingsIcon,
     Logout as LogoutIcon,
 } from "@mui/icons-material";
-import { AuthContext } from "./../../../../context/AuthContext";
+import { AuthContext } from "../../../../context/AuthContext";
 
-export function UserMainBack() {
+export function HRMainBack() {
     const navigate = useNavigate();
     const authContext = useContext(AuthContext);
 

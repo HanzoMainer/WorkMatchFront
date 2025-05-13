@@ -52,7 +52,7 @@ export function SignInBack() {
                 console.log("Успешный вход:", result);
                 signin(result.access_token, result.refresh_token);
                 setSuccess("Вход успешен!");
-                setTimeout(() => navigate("/main"), 0);
+                setTimeout(() => navigate("/usermain"), 0);
             } else {
                 const error = await response.json();
                 console.error("Ошибка входа:", error);
@@ -66,7 +66,7 @@ export function SignInBack() {
 
     useEffect(() => {
         if (isAuthenticated) {
-            navigate("/main", { replace: true });
+            navigate("/usermain", { replace: true });
         }
     }, [isAuthenticated, navigate]);
 

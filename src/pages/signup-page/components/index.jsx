@@ -11,7 +11,8 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { AuthContext } from "../../../context/AuthContext";
 
 export function SignUpBack() {
     const [showPassword, setShowPassword] = useState(false);
@@ -19,6 +20,8 @@ export function SignUpBack() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const navigate = useNavigate();
+    const { signin } = useContext(AuthContext);
+    const [success, setSuccess] = useState(null);
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event) => event.preventDefault();
     const handleMouseUpPassword = (event) => event.preventDefault();
@@ -33,27 +36,46 @@ export function SignUpBack() {
         };
 
         try {
-            const response = await fetch("http://localhost:8000/v1/users/", {
-                method: "POST",
-                headers: {
-                    Accept: "application/json",
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(userData),
-            });
+            const registerResponse = await fetch(
+                "http://localhost:8000/v1/users/",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(userData),
+                }
+            );
 
-            if (response.ok) {
-                const result = await response.json();
-                console.log("Успешная регистрация:", result);
-                navigate("/main");
-            } else {
-                const error = await response.json();
-                console.error("Ошибка регистрации:", error);
-                alert("Ошибка регистрации: " + error.detail);
+            if (!registerResponse.ok) {
+                const error = await registerResponse.json();
+                throw new Error(error.detail || "Ошибка регистрации");
             }
+
+            const loginResponse = await fetch(
+                "http://localhost:8000/v1/users/login/",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ email, password }),
+                }
+            );
+
+            if (!loginResponse.ok) {
+                throw new Error("Ошибка входа после регистрации");
+            }
+
+            const result = await loginResponse.json();
+
+            signin(result.access_token, result.refresh_token);
+
+            setSuccess("Регистрация и вход выполнены успешно!");
+            setTimeout(() => navigate("/usermain"), 0);
         } catch (error) {
-            console.error("Ошибка соединения:", error);
-            alert("Сервер недоступен");
+            console.error("Ошибка:", error);
+            alert(error.message || "Произошла ошибка");
         }
     };
 
