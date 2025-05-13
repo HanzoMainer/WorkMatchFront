@@ -1,9 +1,9 @@
-import { SignBack } from "./components/index.jsx";
+import { SignInBack } from "./components/index.jsx";
 
-export function Sign() {
+export function SignIn() {
     return (
         <>
-            <SignBack />
+            <SignInBack />
         </>
     );
 }

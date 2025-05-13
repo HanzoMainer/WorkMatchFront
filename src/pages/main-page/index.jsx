@@ -1,9 +1,9 @@
-import { MainBack } from "./components/index.jsx";
+import { UserMainBack } from "./user-main-page/components/index.jsx";
 
-export function Main() {
+export function UserMain() {
     return (
         <>
-            <MainBack />
+            <UserMainBack />
         </>
     );
 }

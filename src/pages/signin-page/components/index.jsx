@@ -16,13 +16,13 @@ import Stack from "@mui/material/Stack";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../../context/AuthContext";
 
-export function SignBack() {
+export function SignInBack() {
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const navigate = useNavigate();
-    const { login, isAuthenticated } = useContext(AuthContext);
-    const [setSuccess] = useState(null);
+    const { signin, isAuthenticated } = useContext(AuthContext);
+    const [success, setSuccess] = useState(null);
 
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event) => event.preventDefault();
@@ -50,7 +50,7 @@ export function SignBack() {
             if (response.ok) {
                 const result = await response.json();
                 console.log("Успешный вход:", result);
-                login(result.access_token, result.refresh_token);
+                signin(result.access_token, result.refresh_token);
                 setSuccess("Вход успешен!");
                 setTimeout(() => navigate("/main"), 0);
             } else {
@@ -230,7 +230,7 @@ export function SignBack() {
                             </div>
                             <div className={styles.already}>
                                 <Link
-                                    to="/login"
+                                    to="/signup"
                                     style={{
                                         textDecoration: "none",
                                         color: "black",

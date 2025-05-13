@@ -13,14 +13,12 @@ import Stack from "@mui/material/Stack";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-export function LoginBack() {
+export function SignUpBack() {
     const [showPassword, setShowPassword] = useState(false);
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
     const navigate = useNavigate();
-
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event) => event.preventDefault();
     const handleMouseUpPassword = (event) => event.preventDefault();
@@ -269,7 +267,7 @@ export function LoginBack() {
                             </div>
                             <div className={styles.already}>
                                 <Link
-                                    to="/sign"
+                                    to="/signin"
                                     style={{
                                         textDecoration: "none",
                                         color: "black",
