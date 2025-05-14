@@ -342,7 +342,7 @@ export function HRMainBack() {
                 <Toolbar style={{ backgroundColor: "#283618" }}>
                     <Box className={styles.logo}>
                         <Box className={styles.logoContainer}>
-                            <Link to="/main">
+                            <Link to="/hrmain">
                                 <img
                                     src="/Logo.svg"
                                     alt="Логотип"
