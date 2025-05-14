@@ -6,29 +6,25 @@ import {
     Toolbar,
     Typography,
     Box,
-    Card,
-    CardContent,
-    CardActions,
     Button,
     Modal,
     TextField,
     Avatar,
     Alert,
-    Pagination,
 } from "@mui/material";
 import {
     Home as HomeIcon,
     Person as PersonIcon,
     Settings as SettingsIcon,
     Logout as LogoutIcon,
+    AddCircle as AddCircleIcon,
 } from "@mui/icons-material";
 import { AuthContext } from "../../../../context/AuthContext";
 
 export function HRMainBack() {
     const navigate = useNavigate();
-    const authContext = useContext(AuthContext);
-
-    const { isAuthenticated, logout, refreshToken } = authContext;
+    const { isAuthenticated, logout, refreshToken, userRole } =
+        useContext(AuthContext);
     const [user, setUser] = useState(null);
     const [editData, setEditData] = useState({
         full_name: "",
@@ -39,101 +35,19 @@ export function HRMainBack() {
         old_password: "",
         new_password: "",
     });
+    const [vacancyData, setVacancyData] = useState({
+        title: "",
+        description: "",
+        requirements: "",
+        conditions: "",
+        salary: "",
+        employment_type_str: "",
+    });
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [openModal, setOpenModal] = useState(false);
     const [modalType, setModalType] = useState("profile");
     const [page, setPage] = useState(1);
-
-    const jobs = [
-        {
-            id: 1,
-            title: "Frontend Developer",
-            company: "TechCorp",
-            location: "Москва",
-            description: "Разработка современных веб-приложений на React.",
-        },
-        {
-            id: 2,
-            title: "Backend Developer",
-            company: "SoftGroup",
-            location: "Санкт-Петербург",
-            description: "Создание серверной логики на Node.js и PostgreSQL.",
-        },
-        {
-            id: 3,
-            title: "UI/UX Designer",
-            company: "DesignPro",
-            location: "Новосибирск",
-            description: "Дизайн интерфейсов и прототипирование.",
-        },
-        {
-            id: 4,
-            title: "Frontend Developer",
-            company: "TechCorp",
-            location: "Москва",
-            description: "Разработка современных веб-приложений на React.",
-        },
-        {
-            id: 5,
-            title: "Backend Developer",
-            company: "SoftGroup",
-            location: "Санкт-Петербург",
-            description: "Создание серверной логики на Node.js и PostgreSQL.",
-        },
-        {
-            id: 6,
-            title: "UI/UX Designer",
-            company: "DesignPro",
-            location: "Новосибирск",
-            description: "Дизайн интерфейсов и прототипирование.",
-        },
-        {
-            id: 7,
-            title: "Frontend Developer",
-            company: "TechCorp",
-            location: "Москва",
-            description: "Разработка современных веб-приложений на React.",
-        },
-        {
-            id: 8,
-            title: "Backend Developer",
-            company: "SoftGroup",
-            location: "Санкт-Петербург",
-            description: "Создание серверной логики на Node.js и PostgreSQL.",
-        },
-        {
-            id: 9,
-            title: "UI/UX Designer",
-            company: "DesignPro",
-            location: "Новосибирск",
-            description: "Дизайн интерфейсов и прототипирование.",
-        },
-        {
-            id: 10,
-            title: "Frontend Developer",
-            company: "TechCorp",
-            location: "Москва",
-            description: "Разработка современных веб-приложений на React.",
-        },
-        {
-            id: 11,
-            title: "Backend Developer",
-            company: "SoftGroup",
-            location: "Санкт-Петербург",
-            description: "Создание серверной логики на Node.js и PostgreSQL.",
-        },
-        {
-            id: 12,
-            title: "UI/UX Designer",
-            company: "DesignPro",
-            location: "Новосибирск",
-            description: "Дизайн интерфейсов и прототипирование.",
-        },
-    ];
-
-    const jobsPerPage = 8;
-    const totalPages = Math.ceil(jobs.length / jobsPerPage);
 
     const fetchUserData = async () => {
         try {
@@ -301,6 +215,62 @@ export function HRMainBack() {
         }
     };
 
+    const createVacancy = async (e) => {
+        e.preventDefault();
+        try {
+            if (!vacancyData.title)
+                throw new Error("Название вакансии обязательно");
+            if (!vacancyData.description)
+                throw new Error("Описание обязательно");
+            if (!vacancyData.requirements)
+                throw new Error("Требования обязательны");
+            if (!vacancyData.conditions) throw new Error("Условия обязательны");
+            if (!vacancyData.employment_type_str)
+                throw new Error("Тип занятости обязателен");
+            const salary = parseInt(vacancyData.salary, 10);
+            if (isNaN(salary) || salary < 1)
+                throw new Error("Зарплата должна быть положительным числом");
+
+            const payload = {
+                ...vacancyData,
+                salary,
+            };
+
+            let token = localStorage.getItem("access_token");
+            let response = await fetch("http://localhost:8000/v1/vacancies/", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(
+                    errorData.detail ||
+                        `Ошибка ${response.status}: Не удалось создать вакансию`
+                );
+            }
+
+            setSuccess("Вакансия успешно создана");
+            setError(null);
+            setVacancyData({
+                title: "",
+                description: "",
+                requirements: "",
+                conditions: "",
+                salary: "",
+                employment_type_str: "",
+            });
+            setOpenModal(false);
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+        }
+    };
+
     const handleLogout = () => {
         logout();
         navigate("/signin");
@@ -315,6 +285,8 @@ export function HRMainBack() {
 
     const handleCloseModal = () => {
         setOpenModal(false);
+        setError(null);
+        setSuccess(null);
     };
 
     const handlePageChange = (event, value) => {
@@ -328,9 +300,6 @@ export function HRMainBack() {
             navigate("/signin");
         }
     }, [isAuthenticated, navigate]);
-
-    const startIndex = (page - 1) * jobsPerPage;
-    const currentJobs = jobs.slice(startIndex, startIndex + jobsPerPage);
 
     return (
         <Box className={styles.loginBackground}>
@@ -356,7 +325,7 @@ export function HRMainBack() {
                         className={styles.textStyle}
                         sx={{ flexGrow: 1, justifySelf: "center" }}
                     >
-                        Найди работу
+                        Найти работу
                     </Typography>
                     {user && (
                         <Box
@@ -390,7 +359,7 @@ export function HRMainBack() {
                     <Box className={styles.sidebarList}>
                         <button
                             className={styles.sidebarItem}
-                            onClick={() => navigate("/main")}
+                            onClick={() => navigate("/hrmain")}
                         >
                             <HomeIcon sx={{ mr: 1, color: "#283618" }} />
                             <Typography variant="body1">Главная</Typography>
@@ -411,63 +380,21 @@ export function HRMainBack() {
                         </button>
                         <button
                             className={styles.sidebarItem}
+                            onClick={() => handleOpenModal("vacancy")}
+                        >
+                            <AddCircleIcon sx={{ mr: 1, color: "#283618" }} />
+                            <Typography variant="body1">
+                                Создать вакансию
+                            </Typography>
+                        </button>
+                        <button
+                            className={styles.sidebarItem}
                             onClick={handleLogout}
                         >
                             <LogoutIcon sx={{ mr: 1, color: "#283618" }} />
                             <Typography variant="body1">Выйти</Typography>
                         </button>
                     </Box>
-                </Box>
-
-                <Box className={styles.jobList}>
-                    <Typography
-                        variant="h4"
-                        className={styles.font1}
-                        gutterBottom
-                    >
-                        Вакансии сейчас
-                    </Typography>
-                    {currentJobs.map((job) => (
-                        <Card key={job.id} className={styles.jobCard}>
-                            <CardContent>
-                                <Typography variant="h6" component="h2">
-                                    {job.title}
-                                </Typography>
-                                <Typography
-                                    color="text.secondary"
-                                    component="p"
-                                >
-                                    {job.company} - {job.location}
-                                </Typography>
-                                <Typography
-                                    variant="body2"
-                                    component="p"
-                                    sx={{ mt: 1 }}
-                                >
-                                    {job.description}
-                                </Typography>
-                            </CardContent>
-                            <CardActions>
-                                <Button
-                                    size="small"
-                                    variant="contained"
-                                    style={{ backgroundColor: "#283618" }}
-                                >
-                                    Подать заявку
-                                </Button>
-                            </CardActions>
-                        </Card>
-                    ))}
-                    <Pagination
-                        count={totalPages}
-                        page={page}
-                        onChange={handlePageChange}
-                        sx={{
-                            mt: 2,
-                            display: "flex",
-                            justifyContent: "center",
-                        }}
-                    />
                 </Box>
             </Box>
 
@@ -476,7 +403,9 @@ export function HRMainBack() {
                     <Typography variant="h6" gutterBottom>
                         {modalType === "profile"
                             ? "Редактировать профиль"
-                            : "Смена пароля"}
+                            : modalType === "password"
+                            ? "Смена пароля"
+                            : "Создать вакансию"}
                     </Typography>
                     {modalType === "profile" && user ? (
                         <form onSubmit={updateProfile}>
@@ -544,7 +473,7 @@ export function HRMainBack() {
                                 </Button>
                             </Box>
                         </form>
-                    ) : (
+                    ) : modalType === "password" ? (
                         <form onSubmit={changePassword}>
                             <TextField
                                 label="Старый пароль"
@@ -583,7 +512,112 @@ export function HRMainBack() {
                                 <Button
                                     variant="outlined"
                                     onClick={handleCloseModal}
-                                    color="#283618"
+                                    style={{
+                                        color: "#283618",
+                                        borderColor: "#283618",
+                                    }}
+                                >
+                                    Отмена
+                                </Button>
+                            </Box>
+                        </form>
+                    ) : (
+                        <form onSubmit={createVacancy}>
+                            <TextField
+                                label="Название вакансии"
+                                value={vacancyData.title}
+                                onChange={(e) =>
+                                    setVacancyData({
+                                        ...vacancyData,
+                                        title: e.target.value,
+                                    })
+                                }
+                                fullWidth
+                                margin="normal"
+                            />
+                            <TextField
+                                label="Описание"
+                                value={vacancyData.description}
+                                onChange={(e) =>
+                                    setVacancyData({
+                                        ...vacancyData,
+                                        description: e.target.value,
+                                    })
+                                }
+                                fullWidth
+                                margin="normal"
+                                multiline
+                                rows={4}
+                            />
+                            <TextField
+                                label="Требования"
+                                value={vacancyData.requirements}
+                                onChange={(e) =>
+                                    setVacancyData({
+                                        ...vacancyData,
+                                        requirements: e.target.value,
+                                    })
+                                }
+                                fullWidth
+                                margin="normal"
+                                multiline
+                                rows={4}
+                            />
+                            <TextField
+                                label="Условия"
+                                value={vacancyData.conditions}
+                                onChange={(e) =>
+                                    setVacancyData({
+                                        ...vacancyData,
+                                        conditions: e.target.value,
+                                    })
+                                }
+                                fullWidth
+                                margin="normal"
+                                multiline
+                                rows={4}
+                            />
+                            <TextField
+                                label="Зарплата"
+                                type="number"
+                                value={vacancyData.salary}
+                                onChange={(e) =>
+                                    setVacancyData({
+                                        ...vacancyData,
+                                        salary: e.target.value,
+                                    })
+                                }
+                                fullWidth
+                                margin="normal"
+                                inputProps={{ min: 1 }}
+                            />
+                            <TextField
+                                label="Тип занятости"
+                                value={vacancyData.employment_type_str}
+                                onChange={(e) =>
+                                    setVacancyData({
+                                        ...vacancyData,
+                                        employment_type_str: e.target.value,
+                                    })
+                                }
+                                fullWidth
+                                margin="normal"
+                            />
+                            <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+                                <Button
+                                    type="submit"
+                                    variant="contained"
+                                    style={{ backgroundColor: "#283618" }}
+                                >
+                                    Создать
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleCloseModal}
+                                    style={{
+                                        color: "#283618",
+                                        borderColor: "#283618",
+                                    }}
                                 >
                                     Отмена
                                 </Button>
