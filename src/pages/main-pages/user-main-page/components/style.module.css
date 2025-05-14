@@ -1,0 +1,228 @@
+.loginBackground {
+    display: flex;
+    min-height: 100vh;
+    min-width: 100%;
+    position: absolute;
+    flex-direction: column;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+.bodyHead {
+    min-width: 100%;
+    min-height: 10%;
+    display: grid;
+    background-color: #283618;
+    grid-template-columns: 1fr 33% 1fr;
+}
+
+.bodyLeg {
+    width: 100%;
+    height: 90%;
+    display: grid;
+    grid-template-columns: 1fr 66% 1fr;
+    justify-items: center;
+    background-color: #fefae0;
+    padding-top: 20px;
+}
+
+.logo {
+    display: flex;
+    align-content: center;
+    justify-content: start;
+    grid-column-start: 1;
+}
+
+.logoContainer {
+    width: fit-content;
+    height: fit-content;
+    position: relative;
+    align-self: center;
+    padding-left: 2%;
+}
+
+.logoPhoto {
+    width: 50px;
+}
+
+.textStyle {
+    color: white;
+}
+
+.jobList {
+    width: 80%;
+    display: flex;
+    grid-column-start: 2;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.font1 {
+    font-size: xx-large;
+    color: #283618;
+    font-weight: 900;
+    margin: 0;
+}
+
+.jobCard {
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.jobCard:hover {
+    transform: scale(1.02);
+}
+
+.jobCard h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #283618;
+}
+
+.jobCard p {
+    margin: 5px 0 0;
+    color: #606c38;
+}
+
+.modalBox {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.loginBackground {
+    display: flex;
+    min-height: 100vh;
+    min-width: 100%;
+    position: absolute;
+    flex-direction: column;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+.bodyHead {
+    min-width: 100%;
+    min-height: 10%;
+    display: grid;
+    background-color: #283618;
+    grid-template-columns: 1fr 33% 1fr;
+}
+
+.bodyLeg {
+    width: 100%;
+    height: 90%;
+    display: grid;
+    grid-template-columns: 1fr 66% 1fr;
+    justify-items: center;
+    background-color: #fefae0;
+    padding-top: 20px;
+}
+
+.logo {
+    display: flex;
+    align-content: center;
+    justify-content: start;
+    grid-column-start: 1;
+}
+
+.logoContainer {
+    width: fit-content;
+    height: fit-content;
+    position: relative;
+    align-self: center;
+    padding-left: 2%;
+}
+
+.logoPhoto {
+    width: 50px;
+}
+
+.textStyle {
+    color: white;
+}
+
+.jobList {
+    width: 80%;
+    display: flex;
+    grid-column-start: 2;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.font1 {
+    font-size: xx-large;
+    color: #283618;
+    font-weight: 900;
+    margin: 0;
+}
+
+.jobCard {
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.jobCard:hover {
+    transform: scale(1.02);
+}
+
+.jobCard h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #283618;
+}
+
+.jobCard p {
+    margin: 5px 0 0;
+    color: #606c38;
+}
+
+.modalBox {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.sidebarList {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.sidebarItem {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #283618;
+    text-align: left;
+}
+
+.sidebarItem:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}

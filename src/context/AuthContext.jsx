@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
         !!localStorage.getItem("access_token")
     );
 
-    const login = (accessToken, refreshToken) => {
+    const signin = (accessToken, refreshToken) => {
         localStorage.setItem("access_token", accessToken);
         localStorage.setItem("refresh_token", refreshToken);
         setIsAuthenticated(true);
@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
         try {
             const refreshToken = localStorage.getItem("refresh_token");
             if (!refreshToken) {
-                throw new Error("Refresh token not found");
+                throw new Error("Refresh token не найден");
             }
 
             const response = await fetch("http://localhost:8000/v1/refresh", {
@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to refresh token");
+                throw new Error("Не удалось обновить токен");
             }
 
             const { access_token, refresh_token } = await response.json();
@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
             setIsAuthenticated(true);
             return access_token;
         } catch (err) {
-            console.error("Error refreshing token:", err.message);
+            console.error("Ошибка обновления токена:", err.message);
             logout();
             return null;
         }
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
 
     return (
         <AuthContext.Provider
-            value={{ isAuthenticated, login, logout, refreshToken }}
+            value={{ isAuthenticated, signin, logout, refreshToken }}
         >
             {children}
         </AuthContext.Provider>

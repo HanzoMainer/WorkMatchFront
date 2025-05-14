@@ -22,19 +22,11 @@ import {
     Settings as SettingsIcon,
     Logout as LogoutIcon,
 } from "@mui/icons-material";
-import { AuthContext } from "../../../context/AuthContext";
+import { AuthContext } from "../../../../context/AuthContext";
 
-export function MainBack() {
+export function UserMainBack() {
     const navigate = useNavigate();
     const authContext = useContext(AuthContext);
-
-    if (!authContext) {
-        console.error(
-            "AuthContext is not provided. Ensure MainBack is wrapped in AuthProvider."
-        );
-        navigate("/login");
-        return null;
-    }
 
     const { isAuthenticated, logout, refreshToken } = authContext;
     const [user, setUser] = useState(null);
@@ -192,7 +184,7 @@ export function MainBack() {
             setError(err.message);
             if (err.message.includes("Токен")) {
                 logout();
-                navigate("/login");
+                navigate("/signin");
             }
         }
     };
@@ -311,7 +303,7 @@ export function MainBack() {
 
     const handleLogout = () => {
         logout();
-        navigate("/login");
+        navigate("/signin");
     };
 
     const handleOpenModal = (type) => {
@@ -333,7 +325,7 @@ export function MainBack() {
         if (isAuthenticated) {
             fetchUserData();
         } else {
-            navigate("/login");
+            navigate("/signin");
         }
     }, [isAuthenticated, navigate]);
 
@@ -350,7 +342,7 @@ export function MainBack() {
                 <Toolbar style={{ backgroundColor: "#283618" }}>
                     <Box className={styles.logo}>
                         <Box className={styles.logoContainer}>
-                            <Link to="/main">
+                            <Link to="/usermain">
                                 <img
                                     src="/Logo.svg"
                                     alt="Логотип"
@@ -398,7 +390,7 @@ export function MainBack() {
                     <Box className={styles.sidebarList}>
                         <button
                             className={styles.sidebarItem}
-                            onClick={() => navigate("/main")}
+                            onClick={() => navigate("/usermain")}
                         >
                             <HomeIcon sx={{ mr: 1, color: "#283618" }} />
                             <Typography variant="body1">Главная</Typography>
