@@ -11,6 +11,10 @@ import {
     TextField,
     Avatar,
     Alert,
+    Pagination,
+    Card,
+    CardContent,
+    CardActions,
 } from "@mui/material";
 import {
     Home as HomeIcon,
@@ -18,6 +22,8 @@ import {
     Settings as SettingsIcon,
     Logout as LogoutIcon,
     AddCircle as AddCircleIcon,
+    List as ListIcon,
+    Info as InfoIcon,
 } from "@mui/icons-material";
 import { AuthContext } from "../../../../context/AuthContext";
 
@@ -43,11 +49,15 @@ export function HRMainBack() {
         salary: "",
         employment_type_str: "",
     });
+    const [vacancies, setVacancies] = useState([]);
+    const [totalVacancies, setTotalVacancies] = useState(0);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [openModal, setOpenModal] = useState(false);
     const [modalType, setModalType] = useState("profile");
+    const [selectedVacancy, setSelectedVacancy] = useState(null);
     const [page, setPage] = useState(1);
+    const limit = 5;
 
     const fetchUserData = async () => {
         try {
@@ -88,6 +98,7 @@ export function HRMainBack() {
             }
 
             const data = await response.json();
+            console.log("Fetched user data:", data);
             setUser(data);
             setEditData({
                 full_name: data.full_name,
@@ -101,6 +112,81 @@ export function HRMainBack() {
                 navigate("/signin");
             }
         }
+    };
+
+    const fetchVacancies = async (pageNum) => {
+        try {
+            const skip = (pageNum - 1) * limit;
+            let token = localStorage.getItem("access_token");
+            if (!token) {
+                throw new Error("Токен не найден. Пожалуйста, войдите снова.");
+            }
+
+            let response = await fetch(
+                `http://localhost:8000/v1/vacancies/get_my?skip=${skip}&limit=${limit}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            if (response.status === 401) {
+                token = await refreshToken();
+                if (!token) {
+                    throw new Error(
+                        "Не удалось обновить токен. Пожалуйста, войдите снова."
+                    );
+                }
+
+                response = await fetch(
+                    `http://localhost:8000/v1/vacancies/get_my?skip=${skip}&limit=${limit}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось загрузить вакансии`
+                );
+            }
+
+            const data = await response.json();
+            console.log("Fetched vacancies for user:", user?.username, data);
+            const vacanciesArray = data.Vacancies || [];
+            const total = data.Count || 0;
+            setVacancies(vacanciesArray);
+            setTotalVacancies(total);
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            setVacancies([]);
+            if (err.message.includes("Токен")) {
+                logout();
+                navigate("/signin");
+            }
+        }
+    };
+
+    const clearVacancies = () => {
+        setVacancies([]);
+        setTotalVacancies(0);
+        setPage(1);
+        setError(null);
+    };
+
+    const clearUserData = () => {
+        setUser(null);
+        setEditData({ full_name: "", email: "", username: "" });
+        clearVacancies();
     };
 
     const updateProfile = async (e) => {
@@ -234,6 +320,7 @@ export function HRMainBack() {
             const payload = {
                 ...vacancyData,
                 salary,
+                employment_type: vacancyData.employment_type_str,
             };
 
             let token = localStorage.getItem("access_token");
@@ -245,6 +332,24 @@ export function HRMainBack() {
                 },
                 body: JSON.stringify(payload),
             });
+
+            if (response.status === 401) {
+                token = await refreshToken();
+                if (!token) {
+                    throw new Error(
+                        "Не удалось обновить токен. Пожалуйста, войдите снова."
+                    );
+                }
+
+                response = await fetch("http://localhost:8000/v1/vacancies/", {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                });
+            }
 
             if (!response.ok) {
                 const errorData = await response.json();
@@ -265,6 +370,7 @@ export function HRMainBack() {
                 employment_type_str: "",
             });
             setOpenModal(false);
+            fetchVacancies(page);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -272,12 +378,19 @@ export function HRMainBack() {
     };
 
     const handleLogout = () => {
+        clearUserData();
         logout();
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
         navigate("/signin");
     };
 
-    const handleOpenModal = (type) => {
+    const handleOpenModal = (type, vacancy = null) => {
+        if (type !== "vacancyDetails") {
+            clearVacancies();
+        }
         setModalType(type);
+        setSelectedVacancy(vacancy);
         setOpenModal(true);
         setError(null);
         setSuccess(null);
@@ -285,18 +398,27 @@ export function HRMainBack() {
 
     const handleCloseModal = () => {
         setOpenModal(false);
+        setSelectedVacancy(null);
         setError(null);
         setSuccess(null);
     };
 
     const handlePageChange = (event, value) => {
         setPage(value);
+        fetchVacancies(value);
+    };
+
+    const handleHomeClick = () => {
+        clearVacancies();
+        navigate("/hrmain");
     };
 
     useEffect(() => {
         if (isAuthenticated) {
+            clearUserData();
             fetchUserData();
         } else {
+            clearUserData();
             navigate("/signin");
         }
     }, [isAuthenticated, navigate]);
@@ -359,7 +481,7 @@ export function HRMainBack() {
                     <Box className={styles.sidebarList}>
                         <button
                             className={styles.sidebarItem}
-                            onClick={() => navigate("/hrmain")}
+                            onClick={handleHomeClick}
                         >
                             <HomeIcon sx={{ mr: 1, color: "#283618" }} />
                             <Typography variant="body1">Главная</Typography>
@@ -389,12 +511,96 @@ export function HRMainBack() {
                         </button>
                         <button
                             className={styles.sidebarItem}
+                            onClick={() => fetchVacancies(page)}
+                        >
+                            <ListIcon sx={{ mr: 1, color: "#283618" }} />
+                            <Typography variant="body1">
+                                Мои вакансии
+                            </Typography>
+                        </button>
+                        <button
+                            className={styles.sidebarItem}
                             onClick={handleLogout}
                         >
                             <LogoutIcon sx={{ mr: 1, color: "#283618" }} />
                             <Typography variant="body1">Выйти</Typography>
                         </button>
                     </Box>
+                </Box>
+
+                <Box className={styles.jobList}>
+                    {error && (
+                        <Alert severity="error" sx={{ mb: 2 }}>
+                            {error}
+                        </Alert>
+                    )}
+                    {vacancies.length === 0 && !error && (
+                        <Typography variant="body1" color="text.secondary">
+                            Нажмите "Мои вакансии" для просмотра
+                        </Typography>
+                    )}
+                    {vacancies.map((vacancy) => (
+                        <Card key={vacancy.uuid} className={styles.jobCard}>
+                            <CardContent>
+                                <Typography variant="h6" color="#283618">
+                                    {vacancy.title}
+                                </Typography>
+                                <Typography color="#606c38">
+                                    {vacancy.description}
+                                </Typography>
+                                <Typography color="#606c38">
+                                    Требования: {vacancy.requirements}
+                                </Typography>
+                                <Typography color="#606c38">
+                                    Условия: {vacancy.conditions}
+                                </Typography>
+                                <Typography color="#606c38">
+                                    Зарплата: {vacancy.salary}
+                                </Typography>
+                                <Typography color="#606c38">
+                                    Тип занятости: {vacancy.employment_type}
+                                </Typography>
+                            </CardContent>
+                            <CardActions>
+                                <Button
+                                    size="small"
+                                    variant="contained"
+                                    startIcon={<InfoIcon />}
+                                    style={{ backgroundColor: "#283618" }}
+                                    onClick={() =>
+                                        handleOpenModal(
+                                            "vacancyDetails",
+                                            vacancy
+                                        )
+                                    }
+                                >
+                                    Информация
+                                </Button>
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    style={{
+                                        color: "#283618",
+                                        borderColor: "#283618",
+                                    }}
+                                >
+                                    Просмотр откликов
+                                </Button>
+                            </CardActions>
+                        </Card>
+                    ))}
+                    {totalVacancies > limit && (
+                        <Pagination
+                            count={Math.ceil(totalVacancies / limit)}
+                            page={page}
+                            onChange={handlePageChange}
+                            sx={{
+                                mt: 2,
+                                display: "flex",
+                                justifyContent: "center",
+                            }}
+                        />
+                    )}
                 </Box>
             </Box>
 
@@ -405,7 +611,9 @@ export function HRMainBack() {
                             ? "Редактировать профиль"
                             : modalType === "password"
                             ? "Смена пароля"
-                            : "Создать вакансию"}
+                            : modalType === "vacancy"
+                            ? "Создать вакансию"
+                            : "Информация о вакансии"}
                     </Typography>
                     {modalType === "profile" && user ? (
                         <form onSubmit={updateProfile}>
@@ -521,7 +729,7 @@ export function HRMainBack() {
                                 </Button>
                             </Box>
                         </form>
-                    ) : (
+                    ) : modalType === "vacancy" ? (
                         <form onSubmit={createVacancy}>
                             <TextField
                                 label="Название вакансии"
@@ -623,6 +831,71 @@ export function HRMainBack() {
                                 </Button>
                             </Box>
                         </form>
+                    ) : (
+                        selectedVacancy && (
+                            <Box>
+                                <TextField
+                                    label="Название вакансии"
+                                    value={selectedVacancy.title}
+                                    fullWidth
+                                    margin="normal"
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <TextField
+                                    label="Описание"
+                                    value={selectedVacancy.description}
+                                    fullWidth
+                                    margin="normal"
+                                    multiline
+                                    rows={4}
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <TextField
+                                    label="Требования"
+                                    value={selectedVacancy.requirements}
+                                    fullWidth
+                                    margin="normal"
+                                    multiline
+                                    rows={4}
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <TextField
+                                    label="Условия"
+                                    value={selectedVacancy.conditions}
+                                    fullWidth
+                                    margin="normal"
+                                    multiline
+                                    rows={4}
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <TextField
+                                    label="Зарплата"
+                                    value={selectedVacancy.salary}
+                                    fullWidth
+                                    margin="normal"
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <TextField
+                                    label="Тип занятости"
+                                    value={selectedVacancy.employment_type}
+                                    fullWidth
+                                    margin="normal"
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={handleCloseModal}
+                                        style={{
+                                            color: "#283618",
+                                            borderColor: "#283618",
+                                        }}
+                                    >
+                                        Закрыть
+                                    </Button>
+                                </Box>
+                            </Box>
+                        )
                     )}
                     {error && (
                         <Alert severity="error" sx={{ mt: 2 }}>

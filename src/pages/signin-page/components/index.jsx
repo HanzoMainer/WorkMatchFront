@@ -1,5 +1,5 @@
 import styles from "./style.module.css";
-import { useState, useEffect, useContext} from "react";
+import { useState, useEffect, useContext } from "react";
 import TextField from "@mui/material/TextField";
 import Checkbox from "@mui/material/Checkbox";
 import FormGroup from "@mui/material/FormGroup";
@@ -23,6 +23,7 @@ export function SignInBack() {
     const navigate = useNavigate();
     const { signin, isAuthenticated } = useContext(AuthContext);
     const [success, setSuccess] = useState(null);
+    const [error, setError] = useState(null);
 
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event) => event.preventDefault();
@@ -52,22 +53,80 @@ export function SignInBack() {
                 console.log("Успешный вход:", result);
                 signin(result.access_token, result.refresh_token);
                 setSuccess("Вход успешен!");
-                setTimeout(() => navigate("/usermain"), 0);
+
+                const userInfoResponse = await fetch(
+                    "http://localhost:8000/v1/users/me/",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${result.access_token}`,
+                        },
+                    }
+                );
+
+                if (userInfoResponse.ok) {
+                    const userInfo = await userInfoResponse.json();
+                    const userRole = userInfo.role || "user";
+
+                    setTimeout(
+                        () =>
+                            navigate(
+                                userRole === "user" ? "/usermain" : "/hrmain"
+                            ),
+                        0
+                    );
+                } else {
+                    setTimeout(() => navigate("/usermain"), 0);
+                }
             } else {
                 const error = await response.json();
                 console.error("Ошибка входа:", error);
-                alert("Ошибка входа: " + error.detail);
+                setError(
+                    "Ошибка входа: " +
+                        (error.detail || "Неверные учетные данные")
+                );
             }
         } catch (error) {
             console.error("Ошибка соединения:", error);
-            alert("Сервер недоступен");
+            setError("Сервер недоступен");
         }
     };
 
     useEffect(() => {
-        if (isAuthenticated) {
-            navigate("/usermain", { replace: true });
-        }
+        const checkUserRole = async () => {
+            if (isAuthenticated) {
+                try {
+                    const token = localStorage.getItem("access_token");
+                    if (!token) {
+                        return;
+                    }
+
+                    const userInfoResponse = await fetch(
+                        "http://localhost:8000/v1/users/me/",
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
+
+                    if (userInfoResponse.ok) {
+                        const userInfo = await userInfoResponse.json();
+                        const userRole = userInfo.role || "user";
+                        navigate(
+                            userRole === "user" ? "/usermain" : "/hrmain",
+                            { replace: true }
+                        );
+                    } else {
+                        navigate("/usermain", { replace: true });
+                    }
+                } catch (error) {
+                    console.error("Ошибка проверки роли:", error);
+                    navigate("/usermain", { replace: true });
+                }
+            }
+        };
+
+        checkUserRole();
     }, [isAuthenticated, navigate]);
 
     return (
