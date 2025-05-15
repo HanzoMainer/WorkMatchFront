@@ -36,6 +36,7 @@ export function UserMainBack() {
         about_me: "",
         employment_type_str: "",
     });
+    const [selectedSpecialist, setSelectedSpecialist] = useState(null);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [openModal, setOpenModal] = useState(false);
@@ -202,6 +203,7 @@ export function UserMainBack() {
             setSuccess("Пароль успешно изменен");
             setError(null);
             setPasswordData({ old_password: "", new_password: "" });
+            setOpenModal(false);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -248,6 +250,111 @@ export function UserMainBack() {
         }
     };
 
+    const editSpecialist = async (e) => {
+        e.preventDefault();
+        try {
+            if (!specialistData.position)
+                throw new Error("Должность обязательна");
+            if (!specialistData.about_me)
+                throw new Error("Поле 'О себе' обязательно");
+            if (!specialistData.employment_type_str)
+                throw new Error("Тип занятости обязателен");
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/specialist/edit/${selectedSpecialist.uuid}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(specialistData),
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось обновить специалиста`
+                );
+            }
+            setSuccess("Специалист успешно обновлен");
+            setError(null);
+            setSpecialistData({
+                position: "",
+                about_me: "",
+                employment_type_str: "",
+            });
+            setSelectedSpecialist(null);
+            setOpenModal(false);
+            if (viewMode === "specialists") {
+                fetchSpecialists(page);
+            }
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+        }
+    };
+
+    const addSkill = async (specialistUuid, skill) => {
+        try {
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/specialist/${specialistUuid}/skill`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ skill }),
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось добавить навык`
+                );
+            }
+            setSuccess("Навык успешно добавлен");
+            setError(null);
+            if (viewMode === "specialists") {
+                fetchSpecialists(page);
+            }
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+        }
+    };
+
+    const deleteSkill = async (specialistUuid, skill) => {
+        try {
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/specialist/${specialistUuid}/skill/${encodeURIComponent(
+                    skill
+                )}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось удалить навык`
+                );
+            }
+            setSuccess("Навык успешно удален");
+            setError(null);
+            if (viewMode === "specialists") {
+                fetchSpecialists(page);
+            }
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+        }
+    };
+
     const handleApply = async (vacancy) => {
         try {
             let token = localStorage.getItem("access_token");
@@ -279,8 +386,22 @@ export function UserMainBack() {
         navigate("/signin");
     };
 
-    const handleOpenModal = (type) => {
+    const handleOpenModal = (type, specialist = null) => {
         setModalType(type);
+        setSelectedSpecialist(specialist);
+        if (type === "specialist" && specialist) {
+            setSpecialistData({
+                position: specialist.position || "",
+                about_me: specialist.about_me || "",
+                employment_type_str: specialist.employment_type_str || "",
+            });
+        } else if (type === "specialist") {
+            setSpecialistData({
+                position: "",
+                about_me: "",
+                employment_type_str: "",
+            });
+        }
         setOpenModal(true);
         setError(null);
         setSuccess(null);
@@ -288,8 +409,14 @@ export function UserMainBack() {
 
     const handleCloseModal = () => {
         setOpenModal(false);
+        setSelectedSpecialist(null);
         setError(null);
         setSuccess(null);
+        setSpecialistData({
+            position: "",
+            about_me: "",
+            employment_type_str: "",
+        });
     };
 
     const handleHomeClick = () => {
@@ -365,6 +492,11 @@ export function UserMainBack() {
                             {error}
                         </Alert>
                     )}
+                    {success && (
+                        <Alert severity="success" sx={{ mb: 2 }}>
+                            {success}
+                        </Alert>
+                    )}
                     {viewMode === "vacancies" ? (
                         <>
                             {vacancies.length === 0 && !error && (
@@ -404,6 +536,14 @@ export function UserMainBack() {
                                 <SpecialistCard
                                     key={specialist.uuid}
                                     specialist={specialist}
+                                    onEdit={() =>
+                                        handleOpenModal(
+                                            "specialist",
+                                            specialist
+                                        )
+                                    }
+                                    onAddSkill={addSkill}
+                                    onDeleteSkill={deleteSkill}
                                 />
                             ))}
                             {totalSpecialists > limit && (
@@ -437,10 +577,15 @@ export function UserMainBack() {
                         <SpecialistModalForm
                             specialistData={specialistData}
                             setSpecialistData={setSpecialistData}
-                            onSubmit={createSpecialist}
+                            onSubmit={
+                                selectedSpecialist
+                                    ? editSpecialist
+                                    : createSpecialist
+                            }
                             error={error}
                             success={success}
                             onCancel={handleCloseModal}
+                            isEditing={!!selectedSpecialist}
                         />
                     )}
                 </Box>
