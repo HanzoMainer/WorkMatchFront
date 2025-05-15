@@ -29,8 +29,7 @@ import { AuthContext } from "../../../../context/AuthContext";
 
 export function HRMainBack() {
     const navigate = useNavigate();
-    const { isAuthenticated, logout, refreshToken, userRole } =
-        useContext(AuthContext);
+    const { isAuthenticated, logout } = useContext(AuthContext);
     const [user, setUser] = useState(null);
     const [editData, setEditData] = useState({
         full_name: "",
@@ -62,9 +61,6 @@ export function HRMainBack() {
     const fetchUserData = async () => {
         try {
             let token = localStorage.getItem("access_token");
-            if (!token) {
-                throw new Error("Токен не найден. Пожалуйста, войдите снова.");
-            }
 
             let response = await fetch("http://localhost:8000/v1/users/me", {
                 method: "GET",
@@ -74,38 +70,14 @@ export function HRMainBack() {
                 },
             });
 
-            if (response.status === 401) {
-                token = await refreshToken();
-                if (!token) {
-                    throw new Error(
-                        "Не удалось обновить токен. Пожалуйста, войдите снова."
-                    );
-                }
-
-                response = await fetch("http://localhost:8000/v1/users/me", {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-            }
-
-            if (!response.ok) {
-                throw new Error(
-                    `Ошибка ${response.status}: Не удалось получить данные пользователя`
-                );
-            }
-
             const data = await response.json();
-            console.log("Fetched user data:", data);
             setUser(data);
             setEditData({
-                full_name: data.full_name,
-                email: data.email,
-                username: data.username,
+                full_name: data.full_name || "",
+                email: data.email || "",
+                username: data.username || "",
             });
-        } catch (err) {
+        } catch (err) { 
             setError(err.message);
             if (err.message.includes("Токен")) {
                 logout();
@@ -133,26 +105,6 @@ export function HRMainBack() {
                 }
             );
 
-            if (response.status === 401) {
-                token = await refreshToken();
-                if (!token) {
-                    throw new Error(
-                        "Не удалось обновить токен. Пожалуйста, войдите снова."
-                    );
-                }
-
-                response = await fetch(
-                    `http://localhost:8000/v1/vacancies/get_my?skip=${skip}&limit=${limit}`,
-                    {
-                        method: "GET",
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                    }
-                );
-            }
-
             if (!response.ok) {
                 throw new Error(
                     `Ошибка ${response.status}: Не удалось загрузить вакансии`
@@ -160,7 +112,6 @@ export function HRMainBack() {
             }
 
             const data = await response.json();
-            console.log("Fetched vacancies for user:", user?.username, data);
             const vacanciesArray = data.Vacancies || [];
             const total = data.Count || 0;
             setVacancies(vacanciesArray);
@@ -209,24 +160,6 @@ export function HRMainBack() {
                 body: JSON.stringify(editData),
             });
 
-            if (response.status === 401) {
-                token = await refreshToken();
-                if (!token) {
-                    throw new Error(
-                        "Не удалось обновить токен. Пожалуйста, войдите снова."
-                    );
-                }
-
-                response = await fetch("http://localhost:8000/v1/users/edit", {
-                    method: "PATCH",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(editData),
-                });
-            }
-
             if (!response.ok) {
                 throw new Error(
                     `Ошибка ${response.status}: Не удалось обновить профиль`
@@ -264,27 +197,6 @@ export function HRMainBack() {
                     body: JSON.stringify(passwordData),
                 }
             );
-
-            if (response.status === 401) {
-                token = await refreshToken();
-                if (!token) {
-                    throw new Error(
-                        "Не удалось обновить токен. Пожалуйста, войдите снова."
-                    );
-                }
-
-                response = await fetch(
-                    "http://localhost:8000/v1/users/edit/password",
-                    {
-                        method: "PATCH",
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(passwordData),
-                    }
-                );
-            }
 
             if (!response.ok) {
                 throw new Error(
@@ -333,24 +245,6 @@ export function HRMainBack() {
                 body: JSON.stringify(payload),
             });
 
-            if (response.status === 401) {
-                token = await refreshToken();
-                if (!token) {
-                    throw new Error(
-                        "Не удалось обновить токен. Пожалуйста, войдите снова."
-                    );
-                }
-
-                response = await fetch("http://localhost:8000/v1/vacancies/", {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(payload),
-                });
-            }
-
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(
@@ -378,6 +272,7 @@ export function HRMainBack() {
     };
 
     const handleLogout = () => {
+        console.log("Logging out, clearing data");
         clearUserData();
         logout();
         localStorage.removeItem("access_token");
@@ -659,7 +554,7 @@ export function HRMainBack() {
                                 sx={{ mt: 2 }}
                             ></Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Роль: {user.role}
+                                Роль: {user.role || "Не указана"}
                             </Typography>
                             <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
                                 <Button

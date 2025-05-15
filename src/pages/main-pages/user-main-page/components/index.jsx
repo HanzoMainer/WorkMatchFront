@@ -21,14 +21,15 @@ import {
     Person as PersonIcon,
     Settings as SettingsIcon,
     Logout as LogoutIcon,
+    Info as InfoIcon,
 } from "@mui/icons-material";
 import { AuthContext } from "../../../../context/AuthContext";
 
 export function UserMainBack() {
     const navigate = useNavigate();
     const authContext = useContext(AuthContext);
-
-    const { isAuthenticated, logout, refreshToken } = authContext;
+    const [totalVacancies, setTotalVacancies] = useState(0);
+    const { isAuthenticated, logout } = authContext;
     const [user, setUser] = useState(null);
     const [editData, setEditData] = useState({
         full_name: "",
@@ -44,6 +45,9 @@ export function UserMainBack() {
     const [openModal, setOpenModal] = useState(false);
     const [modalType, setModalType] = useState("profile");
     const [page, setPage] = useState(1);
+    const [vacancies, setVacancies] = useState([]);
+    const [selectedVacancy, setSelectedVacancy] = useState(null);
+    const limit = 3;
 
     const jobs = [
         {
@@ -132,15 +136,46 @@ export function UserMainBack() {
         },
     ];
 
+    const fetchVacancies = async (pageNum) => {
+        try {
+            const skip = (pageNum - 1) * limit;
+            let token = localStorage.getItem("access_token");
+
+            let response = await fetch(
+                `http://localhost:8000/v1/vacancies/?skip=${skip}&limit=${limit}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось загрузить вакансии`
+                );
+            }
+
+            const data = await response.json();
+            const vacanciesArray = data.Vacancies || [];
+            const total = data.Count || 0;
+            setVacancies(vacanciesArray);
+            setTotalVacancies(total);
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            setVacancies([]);
+        }
+    };
+
     const jobsPerPage = 8;
     const totalPages = Math.ceil(jobs.length / jobsPerPage);
 
     const fetchUserData = async () => {
         try {
             let token = localStorage.getItem("access_token");
-            if (!token) {
-                throw new Error("Токен не найден. Пожалуйста, войдите снова.");
-            }
 
             let response = await fetch("http://localhost:8000/v1/users/me", {
                 method: "GET",
@@ -149,23 +184,6 @@ export function UserMainBack() {
                     "Content-Type": "application/json",
                 },
             });
-
-            if (response.status === 401) {
-                token = await refreshToken();
-                if (!token) {
-                    throw new Error(
-                        "Не удалось обновить токен. Пожалуйста, войдите снова."
-                    );
-                }
-
-                response = await fetch("http://localhost:8000/v1/users/me", {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-            }
 
             if (!response.ok) {
                 throw new Error(
@@ -209,24 +227,6 @@ export function UserMainBack() {
                 body: JSON.stringify(editData),
             });
 
-            if (response.status === 401) {
-                token = await refreshToken();
-                if (!token) {
-                    throw new Error(
-                        "Не удалось обновить токен. Пожалуйста, войдите снова."
-                    );
-                }
-
-                response = await fetch("http://localhost:8000/v1/users/edit", {
-                    method: "PATCH",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(editData),
-                });
-            }
-
             if (!response.ok) {
                 throw new Error(
                     `Ошибка ${response.status}: Не удалось обновить профиль`
@@ -265,27 +265,6 @@ export function UserMainBack() {
                 }
             );
 
-            if (response.status === 401) {
-                token = await refreshToken();
-                if (!token) {
-                    throw new Error(
-                        "Не удалось обновить токен. Пожалуйста, войдите снова."
-                    );
-                }
-
-                response = await fetch(
-                    "http://localhost:8000/v1/users/edit/password",
-                    {
-                        method: "PATCH",
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(passwordData),
-                    }
-                );
-            }
-
             if (!response.ok) {
                 throw new Error(
                     `Ошибка ${response.status}: Не удалось сменить пароль`
@@ -306,7 +285,11 @@ export function UserMainBack() {
         navigate("/signin");
     };
 
-    const handleOpenModal = (type) => {
+    const handleOpenModal = (type, vacancy = null) => {
+        if (type !== "vacancyDetails") {
+            clearVacancies();
+        }
+        setSelectedVacancy(vacancy);
         setModalType(type);
         setOpenModal(true);
         setError(null);
@@ -315,10 +298,12 @@ export function UserMainBack() {
 
     const handleCloseModal = () => {
         setOpenModal(false);
+        setSelectedVacancy(null);
     };
 
     const handlePageChange = (event, value) => {
         setPage(value);
+        fetchVacancies(value);
     };
 
     useEffect(() => {
@@ -427,47 +412,76 @@ export function UserMainBack() {
                     >
                         Вакансии сейчас
                     </Typography>
-                    {currentJobs.map((job) => (
-                        <Card key={job.id} className={styles.jobCard}>
-                            <CardContent>
-                                <Typography variant="h6" component="h2">
-                                    {job.title}
-                                </Typography>
-                                <Typography
-                                    color="text.secondary"
-                                    component="p"
-                                >
-                                    {job.company} - {job.location}
-                                </Typography>
-                                <Typography
-                                    variant="body2"
-                                    component="p"
-                                    sx={{ mt: 1 }}
-                                >
-                                    {job.description}
-                                </Typography>
-                            </CardContent>
-                            <CardActions>
-                                <Button
-                                    size="small"
-                                    variant="contained"
-                                    style={{ backgroundColor: "#283618" }}
-                                >
-                                    Подать заявку
-                                </Button>
-                            </CardActions>
-                        </Card>
-                    ))}
-                    <Pagination
-                        count={totalPages}
-                        page={page}
-                        onChange={handlePageChange}
-                        sx={{
-                            mt: 2,
-                            display: "flex",
-                            justifyContent: "center",
-                        }}
-                    />
+
+                    <Box className={styles.jobList}>
+                        {useEffect(() => {
+                            window.addEventListener("load", () =>
+                                fetchVacancies(page)
+                            );
+                            return () =>
+                                window.removeEventListener("load", () =>
+                                    fetchVacancies(page)
+                                );
+                        }, [page])}
+                        {error && (
+                            <Alert severity="error" sx={{ mb: 2 }}>
+                                {error}
+                            </Alert>
+                        )}
+                        {vacancies.map((vacancy) => (
+                            <Card key={vacancy.uuid} className={styles.jobCard}>
+                                <CardContent>
+                                    <Typography variant="h6" color="#283618">
+                                        {vacancy.title}
+                                    </Typography>
+                                    <Typography color="#606c38">
+                                        {vacancy.description}
+                                    </Typography>
+                                    <Typography color="#606c38">
+                                        Требования: {vacancy.requirements}
+                                    </Typography>
+                                    <Typography color="#606c38">
+                                        Условия: {vacancy.conditions}
+                                    </Typography>
+                                    <Typography color="#606c38">
+                                        Зарплата: {vacancy.salary}
+                                    </Typography>
+                                    <Typography color="#606c38">
+                                        Тип занятости: {vacancy.employment_type}
+                                    </Typography>
+                                </CardContent>
+                                <CardActions>
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        startIcon={<InfoIcon />}
+                                        style={{ backgroundColor: "#283618" }}
+                                        onClick={() =>
+                                            handleOpenModal(
+                                                "vacancyDetails",
+                                                vacancy
+                                            )
+                                        }
+                                    >
+                                        Информация
+                                    </Button>
+                                </CardActions>
+                            </Card>
+                        ))}
+                        {totalVacancies > limit && (
+                            <Pagination
+                                count={Math.ceil(totalVacancies / limit)}
+                                page={page}
+                                onChange={handlePageChange}
+                                sx={{
+                                    mt: 3,
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    marginBottom: "3%",
+                                }}
+                            />
+                        )}
+                    </Box>
                 </Box>
             </Box>
 
@@ -544,7 +558,7 @@ export function UserMainBack() {
                                 </Button>
                             </Box>
                         </form>
-                    ) : (
+                    ) : modalType === "password" ? (
                         <form onSubmit={changePassword}>
                             <TextField
                                 label="Старый пароль"
@@ -589,6 +603,78 @@ export function UserMainBack() {
                                 </Button>
                             </Box>
                         </form>
+                    ) : (
+                        selectedVacancy && (
+                            <Box>
+                                <TextField
+                                    label="Название вакансии"
+                                    value={selectedVacancy.title}
+                                    fullWidth
+                                    margin="normal"
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <TextField
+                                    label="Описание"
+                                    value={selectedVacancy.description}
+                                    fullWidth
+                                    margin="normal"
+                                    multiline
+                                    rows={4}
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <TextField
+                                    label="Требования"
+                                    value={selectedVacancy.requirements}
+                                    fullWidth
+                                    margin="normal"
+                                    multiline
+                                    rows={4}
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <TextField
+                                    label="Условия"
+                                    value={selectedVacancy.conditions}
+                                    fullWidth
+                                    margin="normal"
+                                    multiline
+                                    rows={4}
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <TextField
+                                    label="Зарплата"
+                                    value={selectedVacancy.salary}
+                                    fullWidth
+                                    margin="normal"
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <TextField
+                                    label="Тип занятости"
+                                    value={selectedVacancy.employment_type}
+                                    fullWidth
+                                    margin="normal"
+                                    InputProps={{ readOnly: true }}
+                                />
+                                <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={handleCloseModal}
+                                        style={{
+                                            color: "#283618",
+                                            borderColor: "#283618",
+                                        }}
+                                    >
+                                        Закрыть
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        style={{ backgroundColor: "#283618" }}
+                                    >
+                                        Редактировать
+                                    </Button>
+                                </Box>
+                            </Box>
+                        )
                     )}
                     {error && (
                         <Alert severity="error" sx={{ mt: 2 }}>

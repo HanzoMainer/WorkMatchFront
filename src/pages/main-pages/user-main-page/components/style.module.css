@@ -169,6 +169,16 @@
     margin: 0;
 }
 
+
+.jobList {
+    width: 80%;
+    display: flex;
+    grid-column-start: 2;
+    flex-direction: column;
+    gap: 15px;
+}
+
+
 .jobCard {
     background-color: white;
     padding: 15px;
