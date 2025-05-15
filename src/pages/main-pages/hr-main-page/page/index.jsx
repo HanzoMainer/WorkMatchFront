@@ -1,20 +1,18 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Modal, Alert, Typography } from "@mui/material";
-import { AuthContext } from "./../../../../context/AuthContext";
+import { AuthContext } from "../../../../context/AuthContext";
 import styles from "./style.module.css";
-import Header from "./../../components/Header";
-import Sidebar from "./../../components/Sidebar";
-import VacancyCard from "./../../components/VacancyCard";
-import ProfileModalForm from "./../../components/ProfileModalForm";
-import PasswordModalForm from "./../../components/PasswordModalForm";
-import VacancyModalForm from "./../../components/VacancyModalForm";
-import VacancyDetailsModal from "./../../components/VacancyDetailsModal";
-import PaginationComponent from "./../../components/PaginationComponent";
+import Header from "../../components/Header";
+import Sidebar from "../../components/Sidebar";
+import VacancyCard from "../../components/VacancyCard";
+import ProfileModalForm from "../../components/ProfileModalForm";
+import VacancyModalForm from "../../components/VacancyModalForm";
+import VacancyDetailsModal from "../../components/VacancyDetailsModal";
+import PaginationComponent from "../../components/PaginationComponent";
 import {
     Home as HomeIcon,
     Person as PersonIcon,
-    Settings as SettingsIcon,
     Logout as LogoutIcon,
     AddCircle as AddCircleIcon,
     List as ListIcon,
@@ -254,7 +252,6 @@ export function HRMainBack() {
     };
 
     const handleLogout = () => {
-        console.log("Logging out, clearing data");
         clearUserData();
         logout();
         localStorage.removeItem("access_token");
@@ -371,11 +368,6 @@ export function HRMainBack() {
             onClick: () => handleOpenModal("profile"),
         },
         {
-            label: "Настройки",
-            icon: <SettingsIcon sx={{ mr: 1, color: "#283618" }} />,
-            onClick: () => handleOpenModal("password"),
-        },
-        {
             label: "Создать вакансию",
             icon: <AddCircleIcon sx={{ mr: 1, color: "#283618" }} />,
             onClick: () => handleOpenModal("vacancy"),
@@ -427,7 +419,7 @@ export function HRMainBack() {
                             }
                             onViewResponses={() =>
                                 console.log("View responses")
-                            }
+                            } // Замените на реальную функцию
                         />
                     ))}
                     {totalVacancies > 0 && (
@@ -449,17 +441,10 @@ export function HRMainBack() {
                             user={user}
                             editData={editData}
                             setEditData={setEditData}
-                            onSubmit={updateProfile}
-                            error={error}
-                            success={success}
-                            onCancel={handleCloseModal}
-                        />
-                    )}
-                    {modalType === "password" && (
-                        <PasswordModalForm
                             passwordData={passwordData}
                             setPasswordData={setPasswordData}
-                            onSubmit={changePassword}
+                            onSubmitProfile={updateProfile}
+                            onSubmitPassword={changePassword}
                             error={error}
                             success={success}
                             onCancel={handleCloseModal}
