@@ -355,6 +355,65 @@ export function UserMainBack() {
         }
     };
 
+    const addExperience = async (specialistUuid, experience) => {
+        try {
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/specialist/${specialistUuid}/experience`,
+                {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(experience),
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось добавить опыт работы`
+                );
+            }
+            setSuccess("Опыт работы успешно добавлен");
+            setError(null);
+            if (viewMode === "specialists") {
+                fetchSpecialists(page);
+            }
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+        }
+    };
+
+    const deleteExperience = async (specialistUuid, experienceUuid) => {
+        try {
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/specialist/${specialistUuid}/experience/${experienceUuid}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось удалить опыт работы`
+                );
+            }
+            setSuccess("Опыт работы успешно удален");
+            setError(null);
+            if (viewMode === "specialists") {
+                fetchSpecialists(page);
+            }
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+        }
+    };
+
     const handleApply = async (vacancy) => {
         try {
             let token = localStorage.getItem("access_token");
@@ -544,6 +603,8 @@ export function UserMainBack() {
                                     }
                                     onAddSkill={addSkill}
                                     onDeleteSkill={deleteSkill}
+                                    onAddExperience={addExperience}
+                                    onDeleteExperience={deleteExperience}
                                 />
                             ))}
                             {totalSpecialists > limit && (
