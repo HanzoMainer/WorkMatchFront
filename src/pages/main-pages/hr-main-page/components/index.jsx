@@ -122,6 +122,7 @@ export function HRMainBack() {
             const vacanciesArray = data.Vacancies || [];
             const total = data.Count || 0;
             setVacancies(vacanciesArray);
+            setPage(pageNum);
             setTotalVacancies(total);
             setError(null);
         } catch (err) {
@@ -577,7 +578,7 @@ export function HRMainBack() {
                             </CardActions>
                         </Card>
                     ))}
-                    {totalVacancies > limit && (
+                    {totalVacancies > 0 && (
                         <Pagination
                             count={Math.ceil(totalVacancies / limit)}
                             page={page}
