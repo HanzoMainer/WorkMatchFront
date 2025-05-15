@@ -290,7 +290,6 @@ export function UserMainBack() {
     };
 
     const handleOpenModal = (type, vacancy = null) => {
-
         setSelectedVacancy(vacancy);
         setModalType(type);
         setOpenModal(true);
@@ -417,7 +416,19 @@ export function UserMainBack() {
 
                     <Box className={styles.jobList}>
                         {vacancies.map((vacancy) => (
-                            <Card key={vacancy.uuid} className={styles.jobCard}>
+                            <Card
+                                key={vacancy.uuid}
+                                className={styles.jobCard}
+                                sx={{
+                                    transition: "all 0.3s ease",
+                                    "&:hover": {
+                                        transform: "translateY(-5px)",
+                                        boxShadow:
+                                            "0 8px 16px rgba(0, 0, 0, 0.2)",
+                                        cursor: "pointer",
+                                    },
+                                }}
+                            >
                                 <CardContent>
                                     <Typography variant="h6" color="#283618">
                                         {vacancy.title}
@@ -655,7 +666,6 @@ export function UserMainBack() {
                                     >
                                         Закрыть
                                     </Button>
-
                                 </Box>
                             </Box>
                         )

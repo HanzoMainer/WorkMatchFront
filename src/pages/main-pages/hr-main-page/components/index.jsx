@@ -15,6 +15,10 @@ import {
     Card,
     CardContent,
     CardActions,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
 } from "@mui/material";
 import {
     Home as HomeIcon,
@@ -41,20 +45,24 @@ export function HRMainBack() {
         new_password: "",
     });
     const [vacancyData, setVacancyData] = useState({
-        title: "",
         description: "",
         requirements: "",
         conditions: "",
         salary: "",
         employment_type_str: "",
     });
+    const [selectedVacancy, setSelectedVacancy] = useState("");
+
+    const employmentTypes = [
+        { value: "full-time", label: "Полная занятость" },
+        { value: "part-time", label: "Частичная занятость" },
+    ];
     const [vacancies, setVacancies] = useState([]);
     const [totalVacancies, setTotalVacancies] = useState(0);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [openModal, setOpenModal] = useState(false);
     const [modalType, setModalType] = useState("profile");
-    const [selectedVacancy, setSelectedVacancy] = useState(null);
     const [page, setPage] = useState(1);
     const [isEditing, setIsEditing] = useState(false);
     const limit = 5;
@@ -215,23 +223,22 @@ export function HRMainBack() {
     const createVacancy = async (e) => {
         e.preventDefault();
         try {
-            if (!vacancyData.title)
-                throw new Error("Название вакансии обязательно");
             if (!vacancyData.description)
                 throw new Error("Описание обязательно");
             if (!vacancyData.requirements)
                 throw new Error("Требования обязательны");
             if (!vacancyData.conditions) throw new Error("Условия обязательны");
-            if (!vacancyData.employment_type_str)
-                throw new Error("Тип занятости обязателен");
+
             const salary = parseInt(vacancyData.salary, 10);
             if (isNaN(salary) || salary < 1)
                 throw new Error("Зарплата должна быть положительным числом");
 
             const payload = {
-                ...vacancyData,
+                description: vacancyData.description,
+                requirements: vacancyData.requirements,
+                conditions: vacancyData.conditions,
                 salary,
-                employment_type: vacancyData.employment_type_str,
+                employment_type_str: vacancyData.employment_type_str,
             };
 
             let token = localStorage.getItem("access_token");
@@ -283,26 +290,49 @@ export function HRMainBack() {
         setModalType(type);
         setSelectedVacancy(vacancy);
         setOpenModal(true);
+        setIsEditing(false);
         setError(null);
         setSuccess(null);
+
+        if (type !== "vacancyDetails") {
+            setVacancyData({
+                title: "",
+                description: "",
+                requirements: "",
+                conditions: "",
+                salary: "",
+                employment_type_str: "",
+            });
+        }
     };
 
     const handleEditClick = () => {
         setIsEditing(true);
         setVacancyData({
-            title: selectedVacancy.title,
-            description: selectedVacancy.description,
-            requirements: selectedVacancy.requirements,
-            conditions: selectedVacancy.conditions,
-            salary: selectedVacancy.salary.toString(),
-            employment_type_str: selectedVacancy.employment_type,
+            title: selectedVacancy.title || "",
+            description: selectedVacancy.description || "",
+            requirements: selectedVacancy.requirements || "",
+            conditions: selectedVacancy.conditions || "",
+            salary: selectedVacancy.salary
+                ? selectedVacancy.salary.toString()
+                : "",
+            employment_type: selectedVacancy.employment_type || "",
         });
     };
     const handleCloseModal = () => {
         setOpenModal(false);
         setSelectedVacancy(null);
+        setIsEditing(false);
         setError(null);
         setSuccess(null);
+        setVacancyData({
+            title: "",
+            description: "",
+            requirements: "",
+            conditions: "",
+            salary: "",
+            employment_type_str: "",
+        });
     };
 
     const handlePageChange = (event, value) => {
@@ -313,6 +343,51 @@ export function HRMainBack() {
     const handleHomeClick = () => {
         clearVacancies();
         navigate("/hrmain");
+    };
+    const handleSaveChanges = async () => {
+        try {
+            if (!vacancyData.description)
+                throw new Error("Описание обязательно");
+            if (!vacancyData.requirements)
+                throw new Error("Требования обязательны");
+            if (!vacancyData.conditions) throw new Error("Условия обязательны");
+            const salary = parseInt(vacancyData.salary, 10);
+            if (isNaN(salary) || salary < 1)
+                throw new Error("Зарплата должна быть положительным числом");
+
+            const token = localStorage.getItem("access_token");
+            const response = await fetch(
+                `http://localhost:8000/v1/vacancies/edit/${selectedVacancy.uuid}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                    },
+                    body: JSON.stringify({
+                        description: vacancyData.description,
+                        requirements: vacancyData.requirements,
+                        conditions: vacancyData.conditions,
+                        salary: salary,
+                        employment_type_str: vacancyData.employment_type,
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(
+                    errorData.detail || "Ошибка при обновлении вакансии"
+                );
+            }
+
+            setSuccess("Вакансия успешно обновлена");
+            setIsEditing(false);
+            fetchVacancies(page);
+        } catch (err) {
+            setError(err.message);
+        }
     };
 
     useEffect(() => {
@@ -442,7 +517,18 @@ export function HRMainBack() {
                         </Typography>
                     )}
                     {vacancies.map((vacancy) => (
-                        <Card key={vacancy.uuid} className={styles.jobCard}>
+                        <Card
+                            key={vacancy.uuid}
+                            className={styles.jobCard}
+                            sx={{
+                                transition: "all 0.3s ease",
+                                "&:hover": {
+                                    transform: "translateY(-5px)",
+                                    boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)",
+                                    cursor: "pointer",
+                                },
+                            }}
+                        >
                             <CardContent>
                                 <Typography variant="h6" color="#283618">
                                     {vacancy.title}
@@ -497,9 +583,10 @@ export function HRMainBack() {
                             page={page}
                             onChange={handlePageChange}
                             sx={{
-                                mt: 2,
+                                mt: 3,
                                 display: "flex",
                                 justifyContent: "center",
+                                marginBottom: "3%",
                             }}
                         />
                     )}
@@ -701,18 +788,29 @@ export function HRMainBack() {
                                 margin="normal"
                                 inputProps={{ min: 1 }}
                             />
-                            <TextField
-                                label="Тип занятости"
-                                value={vacancyData.employment_type_str}
-                                onChange={(e) =>
-                                    setVacancyData({
-                                        ...vacancyData,
-                                        employment_type_str: e.target.value,
-                                    })
-                                }
-                                fullWidth
-                                margin="normal"
-                            />
+                            <FormControl fullWidth>
+                                <InputLabel>Тип занятости</InputLabel>
+                                <Select
+                                    value={vacancyData.employment_type_str}
+                                    label="Тип занятости"
+                                    onChange={(e) =>
+                                        setVacancyData({
+                                            ...vacancyData,
+                                            employment_type_str: e.target.value,
+                                        })
+                                    }
+                                    required
+                                >
+                                    {employmentTypes.map((type) => (
+                                        <MenuItem
+                                            key={type.value}
+                                            value={type.value}
+                                        >
+                                            {type.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
                             <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
                                 <Button
                                     type="submit"
@@ -741,68 +839,175 @@ export function HRMainBack() {
                                     value={selectedVacancy.title}
                                     fullWidth
                                     margin="normal"
-                                    InputProps={{ readOnly: true }}
+                                    disabled
                                 />
+
                                 <TextField
                                     label="Описание"
-                                    value={selectedVacancy.description}
+                                    value={
+                                        isEditing
+                                            ? vacancyData.description
+                                            : selectedVacancy.description
+                                    }
+                                    onChange={(e) =>
+                                        isEditing &&
+                                        setVacancyData({
+                                            ...vacancyData,
+                                            description: e.target.value,
+                                        })
+                                    }
                                     fullWidth
                                     margin="normal"
                                     multiline
                                     rows={4}
-                                    InputProps={{ readOnly: true }}
+                                    disabled={!isEditing}
                                 />
+
                                 <TextField
                                     label="Требования"
-                                    value={selectedVacancy.requirements}
+                                    value={
+                                        isEditing
+                                            ? vacancyData.requirements
+                                            : selectedVacancy.requirements
+                                    }
+                                    onChange={(e) =>
+                                        isEditing &&
+                                        setVacancyData({
+                                            ...vacancyData,
+                                            requirements: e.target.value,
+                                        })
+                                    }
                                     fullWidth
                                     margin="normal"
                                     multiline
                                     rows={4}
-                                    InputProps={{ readOnly: true }}
+                                    disabled={!isEditing}
                                 />
                                 <TextField
                                     label="Условия"
-                                    value={selectedVacancy.conditions}
+                                    value={
+                                        isEditing
+                                            ? vacancyData.conditions
+                                            : selectedVacancy.conditions
+                                    }
+                                    onChange={(e) =>
+                                        isEditing &&
+                                        setVacancyData({
+                                            ...vacancyData,
+                                            conditions: e.target.value,
+                                        })
+                                    }
                                     fullWidth
                                     margin="normal"
                                     multiline
                                     rows={4}
-                                    InputProps={{ readOnly: true }}
+                                    disabled={!isEditing}
                                 />
                                 <TextField
                                     label="Зарплата"
-                                    value={selectedVacancy.salary}
+                                    value={
+                                        isEditing
+                                            ? vacancyData.salary
+                                            : selectedVacancy.salary
+                                    }
+                                    onChange={(e) =>
+                                        isEditing &&
+                                        setVacancyData({
+                                            ...vacancyData,
+                                            salary: e.target.value,
+                                        })
+                                    }
                                     fullWidth
                                     margin="normal"
-                                    InputProps={{ readOnly: true }}
+                                    disabled={!isEditing}
                                 />
-                                <TextField
-                                    label="Тип занятости"
-                                    value={selectedVacancy.employment_type}
+                                <FormControl
                                     fullWidth
                                     margin="normal"
-                                    InputProps={{ readOnly: true }}
-                                />
+                                    disabled={!isEditing}
+                                >
+                                    <FormControl
+                                        fullWidth
+                                        margin="normal"
+                                        disabled={!isEditing}
+                                    >
+                                        <InputLabel>Тип занятости</InputLabel>
+                                        <Select
+                                            value={
+                                                (isEditing
+                                                    ? vacancyData.employment_type
+                                                    : selectedVacancy.employment_type) ||
+                                                ""
+                                            }
+                                            label="Тип занятости"
+                                            onChange={(e) =>
+                                                isEditing &&
+                                                setVacancyData({
+                                                    ...vacancyData,
+                                                    employment_type:
+                                                        e.target.value,
+                                                })
+                                            }
+                                        >
+                                            {employmentTypes.map((type) => (
+                                                <MenuItem
+                                                    key={type.value}
+                                                    value={type.value}
+                                                >
+                                                    {type.label}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </FormControl>
                                 <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={handleCloseModal}
-                                        style={{
-                                            color: "#283618",
-                                            borderColor: "#283618",
-                                        }}
-                                    >
-                                        Закрыть
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        variant="contained"
-                                        style={{ backgroundColor: "#283618" }}
-                                        onClick={handleEditClick}
-                                    >
-                                        Редактировать
-                                    </Button>
+                                    {isEditing ? (
+                                        <>
+                                            <Button
+                                                variant="contained"
+                                                style={{
+                                                    backgroundColor: "#283618",
+                                                }}
+                                                onClick={handleSaveChanges}
+                                            >
+                                                Сохранить
+                                            </Button>
+                                            <Button
+                                                variant="outlined"
+                                                style={{
+                                                    color: "#283618",
+                                                    borderColor: "#283618",
+                                                }}
+                                                onClick={() =>
+                                                    setIsEditing(false)
+                                                }
+                                            >
+                                                Отмена
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Button
+                                                variant="outlined"
+                                                onClick={handleCloseModal}
+                                                style={{
+                                                    color: "#283618",
+                                                    borderColor: "#283618",
+                                                }}
+                                            >
+                                                Закрыть
+                                            </Button>
+                                            <Button
+                                                variant="contained"
+                                                style={{
+                                                    backgroundColor: "#283618",
+                                                }}
+                                                onClick={handleEditClick}
+                                            >
+                                                Редактировать
+                                            </Button>
+                                        </>
+                                    )}
                                 </Box>
                             </Box>
                         )
