@@ -6,14 +6,16 @@ import styles from "./style.module.css";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import VacancyCard from "../../components/VacancyCard";
+import SpecialistCard from "../../components/SpecialistCard";
 import ProfileModalForm from "../../components/ProfileModalForm";
-import PasswordModalForm from "../../components/PasswordModalForm";
+import SpecialistModalForm from "../../components/SpecialistModalForm";
 import PaginationComponent from "../../components/PaginationComponent";
 import {
     Home as HomeIcon,
     Person as PersonIcon,
-    Settings as SettingsIcon,
     Logout as LogoutIcon,
+    List as ListIcon,
+    AddCircle as AddCircleIcon,
 } from "@mui/icons-material";
 
 export function UserMainBack() {
@@ -29,13 +31,21 @@ export function UserMainBack() {
         old_password: "",
         new_password: "",
     });
+    const [specialistData, setSpecialistData] = useState({
+        position: "",
+        about_me: "",
+        employment_type_str: "",
+    });
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [openModal, setOpenModal] = useState(false);
     const [modalType, setModalType] = useState("profile");
     const [page, setPage] = useState(1);
     const [vacancies, setVacancies] = useState([]);
+    const [specialists, setSpecialists] = useState([]);
     const [totalVacancies, setTotalVacancies] = useState(0);
+    const [totalSpecialists, setTotalSpecialists] = useState(0);
+    const [viewMode, setViewMode] = useState("vacancies");
     const limit = 3;
 
     const fetchVacancies = async (pageNum) => {
@@ -66,6 +76,37 @@ export function UserMainBack() {
         } catch (err) {
             setError(err.message);
             setVacancies([]);
+        }
+    };
+
+    const fetchSpecialists = async (pageNum) => {
+        try {
+            const skip = (pageNum - 1) * limit;
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/specialist/?skip=${skip}&limit=${limit}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось загрузить специалистов`
+                );
+            }
+            const data = await response.json();
+            const specialistsArray = data.Specialists || [];
+            const total = data.Count || 0;
+            setSpecialists(specialistsArray);
+            setTotalSpecialists(total);
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            setSpecialists([]);
         }
     };
 
@@ -167,6 +208,46 @@ export function UserMainBack() {
         }
     };
 
+    const createSpecialist = async (e) => {
+        e.preventDefault();
+        try {
+            if (!specialistData.position)
+                throw new Error("Должность обязательна");
+            if (!specialistData.about_me)
+                throw new Error("Поле 'О себе' обязательно");
+            if (!specialistData.employment_type_str)
+                throw new Error("Тип занятости обязателен");
+            let token = localStorage.getItem("access_token");
+            let response = await fetch("http://localhost:8000/v1/specialist/", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(specialistData),
+            });
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось создать специалиста`
+                );
+            }
+            setSuccess("Специалист успешно создан");
+            setError(null);
+            setSpecialistData({
+                position: "",
+                about_me: "",
+                employment_type_str: "",
+            });
+            setOpenModal(false);
+            if (viewMode === "specialists") {
+                fetchSpecialists(page);
+            }
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+        }
+    };
+
     const handleApply = async (vacancy) => {
         try {
             let token = localStorage.getItem("access_token");
@@ -207,13 +288,27 @@ export function UserMainBack() {
 
     const handleCloseModal = () => {
         setOpenModal(false);
+        setError(null);
+        setSuccess(null);
+    };
+
+    const handleHomeClick = () => {
+        setViewMode("vacancies");
+        setPage(1);
+        fetchVacancies(1);
+    };
+
+    const handleSpecialistsClick = () => {
+        setViewMode("specialists");
+        setPage(1);
+        fetchSpecialists(1);
     };
 
     const sidebarItems = [
         {
             label: "Главная",
             icon: <HomeIcon sx={{ mr: 1, color: "#283618" }} />,
-            onClick: () => navigate("/usermain"),
+            onClick: handleHomeClick,
         },
         {
             label: "Профиль",
@@ -221,9 +316,14 @@ export function UserMainBack() {
             onClick: () => handleOpenModal("profile"),
         },
         {
-            label: "Настройки",
-            icon: <SettingsIcon sx={{ mr: 1, color: "#283618" }} />,
-            onClick: () => handleOpenModal("password"),
+            label: "Создать специалиста",
+            icon: <AddCircleIcon sx={{ mr: 1, color: "#283618" }} />,
+            onClick: () => handleOpenModal("specialist"),
+        },
+        {
+            label: "Мои специалисты",
+            icon: <ListIcon sx={{ mr: 1, color: "#283618" }} />,
+            onClick: handleSpecialistsClick,
         },
         {
             label: "Выйти",
@@ -235,11 +335,15 @@ export function UserMainBack() {
     useEffect(() => {
         if (isAuthenticated) {
             fetchUserData();
-            fetchVacancies(page);
+            if (viewMode === "vacancies") {
+                fetchVacancies(page);
+            } else {
+                fetchSpecialists(page);
+            }
         } else {
             navigate("/signin");
         }
-    }, [isAuthenticated, navigate, page]);
+    }, [isAuthenticated, navigate, page, viewMode]);
 
     return (
         <Box className={styles.loginBackground}>
@@ -252,26 +356,64 @@ export function UserMainBack() {
                         className={styles.font1}
                         gutterBottom
                     >
-                        Вакансии сейчас
+                        {viewMode === "vacancies"
+                            ? "Вакансии сейчас"
+                            : "Мои специалисты"}
                     </Typography>
                     {error && (
                         <Alert severity="error" sx={{ mb: 2 }}>
                             {error}
                         </Alert>
                     )}
-                    {vacancies.map((vacancy) => (
-                        <VacancyCard
-                            key={vacancy.uuid}
-                            vacancy={vacancy}
-                            onApply={handleApply}
-                        />
-                    ))}
-                    {totalVacancies > limit && (
-                        <PaginationComponent
-                            count={Math.ceil(totalVacancies / limit)}
-                            page={page}
-                            onChange={(e, value) => setPage(value)}
-                        />
+                    {viewMode === "vacancies" ? (
+                        <>
+                            {vacancies.length === 0 && !error && (
+                                <Typography
+                                    variant="body1"
+                                    color="text.secondary"
+                                >
+                                    Нет доступных вакансий
+                                </Typography>
+                            )}
+                            {vacancies.map((vacancy) => (
+                                <VacancyCard
+                                    key={vacancy.uuid}
+                                    vacancy={vacancy}
+                                    onApply={handleApply}
+                                />
+                            ))}
+                            {totalVacancies > limit && (
+                                <PaginationComponent
+                                    count={Math.ceil(totalVacancies / limit)}
+                                    page={page}
+                                    onChange={(e, value) => setPage(value)}
+                                />
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            {specialists.length === 0 && !error && (
+                                <Typography
+                                    variant="body1"
+                                    color="text.secondary"
+                                >
+                                    Вы пока не создали специалистов
+                                </Typography>
+                            )}
+                            {specialists.map((specialist) => (
+                                <SpecialistCard
+                                    key={specialist.uuid}
+                                    specialist={specialist}
+                                />
+                            ))}
+                            {totalSpecialists > limit && (
+                                <PaginationComponent
+                                    count={Math.ceil(totalSpecialists / limit)}
+                                    page={page}
+                                    onChange={(e, value) => setPage(value)}
+                                />
+                            )}
+                        </>
                     )}
                 </Box>
             </Box>
@@ -282,17 +424,20 @@ export function UserMainBack() {
                             user={user}
                             editData={editData}
                             setEditData={setEditData}
-                            onSubmit={updateProfile}
+                            passwordData={passwordData}
+                            setPasswordData={setPasswordData}
+                            onSubmitProfile={updateProfile}
+                            onSubmitPassword={changePassword}
                             error={error}
                             success={success}
                             onCancel={handleCloseModal}
                         />
                     )}
-                    {modalType === "password" && (
-                        <PasswordModalForm
-                            passwordData={passwordData}
-                            setPasswordData={setPasswordData}
-                            onSubmit={changePassword}
+                    {modalType === "specialist" && (
+                        <SpecialistModalForm
+                            specialistData={specialistData}
+                            setSpecialistData={setSpecialistData}
+                            onSubmit={createSpecialist}
                             error={error}
                             success={success}
                             onCancel={handleCloseModal}
