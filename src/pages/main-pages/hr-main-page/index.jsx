@@ -1,4 +1,4 @@
-import { HRMainBack } from "./components/index";
+import { HRMainBack } from "./page/index";
 
 export function HRMain() {
     return (
