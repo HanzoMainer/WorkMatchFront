@@ -56,6 +56,7 @@ export function HRMainBack() {
     const [modalType, setModalType] = useState("profile");
     const [selectedVacancy, setSelectedVacancy] = useState(null);
     const [page, setPage] = useState(1);
+    const [isEditing, setIsEditing] = useState(false);
     const limit = 5;
 
     const fetchUserData = async () => {
@@ -77,7 +78,7 @@ export function HRMainBack() {
                 email: data.email || "",
                 username: data.username || "",
             });
-        } catch (err) { 
+        } catch (err) {
             setError(err.message);
             if (err.message.includes("Токен")) {
                 logout();
@@ -106,9 +107,7 @@ export function HRMainBack() {
             );
 
             if (!response.ok) {
-                throw new Error(
-                    `Ошибка ${response.status}: Не удалось загрузить вакансии`
-                );
+                throw new Error(`Нет созданных Вами вакансий.`);
             }
 
             const data = await response.json();
@@ -281,9 +280,6 @@ export function HRMainBack() {
     };
 
     const handleOpenModal = (type, vacancy = null) => {
-        if (type !== "vacancyDetails") {
-            clearVacancies();
-        }
         setModalType(type);
         setSelectedVacancy(vacancy);
         setOpenModal(true);
@@ -291,6 +287,17 @@ export function HRMainBack() {
         setSuccess(null);
     };
 
+    const handleEditClick = () => {
+        setIsEditing(true);
+        setVacancyData({
+            title: selectedVacancy.title,
+            description: selectedVacancy.description,
+            requirements: selectedVacancy.requirements,
+            conditions: selectedVacancy.conditions,
+            salary: selectedVacancy.salary.toString(),
+            employment_type_str: selectedVacancy.employment_type,
+        });
+    };
     const handleCloseModal = () => {
         setOpenModal(false);
         setSelectedVacancy(null);
@@ -787,6 +794,14 @@ export function HRMainBack() {
                                         }}
                                     >
                                         Закрыть
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        style={{ backgroundColor: "#283618" }}
+                                        onClick={handleEditClick}
+                                    >
+                                        Редактировать
                                     </Button>
                                 </Box>
                             </Box>

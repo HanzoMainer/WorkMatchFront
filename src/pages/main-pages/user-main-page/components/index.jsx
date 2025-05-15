@@ -136,6 +136,10 @@ export function UserMainBack() {
         },
     ];
 
+    useEffect(() => {
+        fetchVacancies(page);
+    }, [page]);
+
     const fetchVacancies = async (pageNum) => {
         try {
             const skip = (pageNum - 1) * limit;
@@ -286,9 +290,7 @@ export function UserMainBack() {
     };
 
     const handleOpenModal = (type, vacancy = null) => {
-        if (type !== "vacancyDetails") {
-            clearVacancies();
-        }
+
         setSelectedVacancy(vacancy);
         setModalType(type);
         setOpenModal(true);
@@ -341,7 +343,7 @@ export function UserMainBack() {
                         className={styles.textStyle}
                         sx={{ flexGrow: 1, justifySelf: "center" }}
                     >
-                        Найди работу
+                        Найти работу
                     </Typography>
                     {user && (
                         <Box
@@ -414,20 +416,6 @@ export function UserMainBack() {
                     </Typography>
 
                     <Box className={styles.jobList}>
-                        {useEffect(() => {
-                            window.addEventListener("load", () =>
-                                fetchVacancies(page)
-                            );
-                            return () =>
-                                window.removeEventListener("load", () =>
-                                    fetchVacancies(page)
-                                );
-                        }, [page])}
-                        {error && (
-                            <Alert severity="error" sx={{ mb: 2 }}>
-                                {error}
-                            </Alert>
-                        )}
                         {vacancies.map((vacancy) => (
                             <Card key={vacancy.uuid} className={styles.jobCard}>
                                 <CardContent>
@@ -490,7 +478,9 @@ export function UserMainBack() {
                     <Typography variant="h6" gutterBottom>
                         {modalType === "profile"
                             ? "Редактировать профиль"
-                            : "Смена пароля"}
+                            : modalType === "password"
+                            ? "Смена пароля"
+                            : "Информация о вакансии"}
                     </Typography>
                     {modalType === "profile" && user ? (
                         <form onSubmit={updateProfile}>
@@ -665,13 +655,7 @@ export function UserMainBack() {
                                     >
                                         Закрыть
                                     </Button>
-                                    <Button
-                                        type="submit"
-                                        variant="contained"
-                                        style={{ backgroundColor: "#283618" }}
-                                    >
-                                        Редактировать
-                                    </Button>
+
                                 </Box>
                             </Box>
                         )
