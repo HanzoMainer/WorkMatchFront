@@ -1,4 +1,4 @@
-import { UserMainBack } from "./components/index.jsx";
+import { UserMainBack } from "./page/index.jsx";
 
 export function UserMain() {
     return (
