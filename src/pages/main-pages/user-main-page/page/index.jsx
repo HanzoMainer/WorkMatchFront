@@ -1,12 +1,22 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Modal, Alert, Typography } from "@mui/material";
+import {
+    Box,
+    Modal,
+    Alert,
+    Typography,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+} from "@mui/material";
 import { AuthContext } from "../../../../context/AuthContext";
 import styles from "./style.module.css";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import VacancyCard from "../../components/VacancyCard";
 import SpecialistCard from "../../components/SpecialistCard";
+import ApplicationCard from "../../components/ApplicationCard";
 import ProfileModalForm from "../../components/ProfileModalForm";
 import SpecialistModalForm from "../../components/SpecialistModalForm";
 import PaginationComponent from "../../components/PaginationComponent";
@@ -16,6 +26,7 @@ import {
     Logout as LogoutIcon,
     List as ListIcon,
     AddCircle as AddCircleIcon,
+    Bookmark as BookmarkIcon,
 } from "@mui/icons-material";
 
 export function UserMainBack() {
@@ -37,6 +48,7 @@ export function UserMainBack() {
         employment_type_str: "",
     });
     const [selectedSpecialist, setSelectedSpecialist] = useState(null);
+    const [selectedSpecialistUuid, setSelectedSpecialistUuid] = useState("");
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [openModal, setOpenModal] = useState(false);
@@ -44,8 +56,10 @@ export function UserMainBack() {
     const [page, setPage] = useState(1);
     const [vacancies, setVacancies] = useState([]);
     const [specialists, setSpecialists] = useState([]);
+    const [applications, setApplications] = useState([]);
     const [totalVacancies, setTotalVacancies] = useState(0);
     const [totalSpecialists, setTotalSpecialists] = useState(0);
+    const [totalApplications, setTotalApplications] = useState(0);
     const [viewMode, setViewMode] = useState("vacancies");
     const limit = 3;
 
@@ -111,6 +125,57 @@ export function UserMainBack() {
         }
     };
 
+    const fetchApplications = async (pageNum, specialistUuid) => {
+        try {
+            const skip = (pageNum - 1) * limit;
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/applications/specialist/${specialistUuid}?skip=${skip}&limit=${limit}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось загрузить отклики`
+                );
+            }
+            const data = await response.json();
+            const applicationsArray = data.applications || [];
+            const total = data.applications?.length || 0;
+            const vacanciesData = await Promise.all(
+                applicationsArray.map(async (app) => {
+                    let vacResponse = await fetch(
+                        `http://localhost:8000/v1/vacancies/${app.vacancy_uuid}`,
+                        {
+                            method: "GET",
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "application/json",
+                            },
+                        }
+                    );
+                    return vacResponse.ok ? await vacResponse.json() : null;
+                })
+            );
+            setApplications(
+                applicationsArray.map((app, index) => ({
+                    ...app,
+                    vacancy: vacanciesData[index],
+                }))
+            );
+            setTotalApplications(total);
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            setApplications([]);
+        }
+    };
+
     const fetchUserData = async () => {
         try {
             let token = localStorage.getItem("access_token");
@@ -133,6 +198,7 @@ export function UserMainBack() {
                 email: data.email || "",
                 username: data.username || "",
             });
+            fetchSpecialists(1); 
         } catch (err) {
             setError(err.message);
             if (err.message.includes("Токен")) {
@@ -169,6 +235,7 @@ export function UserMainBack() {
             setUser(data);
             setSuccess("Профиль успешно обновлен");
             setError(null);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -204,6 +271,7 @@ export function UserMainBack() {
             setError(null);
             setPasswordData({ old_password: "", new_password: "" });
             setOpenModal(false);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -241,9 +309,8 @@ export function UserMainBack() {
                 employment_type_str: "",
             });
             setOpenModal(false);
-            if (viewMode === "specialists") {
-                fetchSpecialists(page);
-            }
+            fetchSpecialists(1);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -285,9 +352,8 @@ export function UserMainBack() {
             });
             setSelectedSpecialist(null);
             setOpenModal(false);
-            if (viewMode === "specialists") {
-                fetchSpecialists(page);
-            }
+            fetchSpecialists(page);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -318,6 +384,7 @@ export function UserMainBack() {
             if (viewMode === "specialists") {
                 fetchSpecialists(page);
             }
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -349,6 +416,7 @@ export function UserMainBack() {
             if (viewMode === "specialists") {
                 fetchSpecialists(page);
             }
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -379,6 +447,7 @@ export function UserMainBack() {
             if (viewMode === "specialists") {
                 fetchSpecialists(page);
             }
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -408,23 +477,34 @@ export function UserMainBack() {
             if (viewMode === "specialists") {
                 fetchSpecialists(page);
             }
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
         }
     };
 
-    const handleApply = async (vacancy) => {
+    const createApplication = async (specialistUuid, vacancyUuid) => {
+        if (!specialistUuid) {
+            setError("Выберите специалиста для отправки отклика");
+            setTimeout(() => setError(null), 3000);
+            return;
+        }
         try {
             let token = localStorage.getItem("access_token");
             let response = await fetch(
-                `http://localhost:8000/v1/vacancies/${vacancy.uuid}/apply`,
+                `http://localhost:8000/v1/applications/${specialistUuid}/${vacancyUuid}`,
                 {
                     method: "POST",
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "application/json",
                     },
+                    body: JSON.stringify({
+                        o_id: 0,
+                        specialist_uuid: specialistUuid,
+                        vacancy_uuid: vacancyUuid,
+                    }),
                 }
             );
             if (!response.ok) {
@@ -434,15 +514,20 @@ export function UserMainBack() {
             }
             setSuccess("Отклик успешно отправлен");
             setError(null);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
+            setTimeout(() => setError(null), 3000);
         }
     };
 
     const handleLogout = () => {
         logout();
         navigate("/signin");
+        setSelectedSpecialistUuid("");
+        setSuccess(null);
+        setError(null);
     };
 
     const handleOpenModal = (type, specialist = null) => {
@@ -462,6 +547,7 @@ export function UserMainBack() {
             });
         }
         setOpenModal(true);
+        setSelectedSpecialistUuid("");
         setError(null);
         setSuccess(null);
     };
@@ -482,12 +568,26 @@ export function UserMainBack() {
         setViewMode("vacancies");
         setPage(1);
         fetchVacancies(1);
+        setSelectedSpecialistUuid("");
+        setSuccess(null);
+        setError(null);
     };
 
     const handleSpecialistsClick = () => {
         setViewMode("specialists");
         setPage(1);
         fetchSpecialists(1);
+        setSelectedSpecialistUuid("");
+        setSuccess(null);
+        setError(null);
+    };
+
+    const handleApplicationsClick = () => {
+        setViewMode("applications");
+        setPage(1);
+        setSelectedSpecialistUuid("");
+        setSuccess(null);
+        setError(null);
     };
 
     const sidebarItems = [
@@ -499,17 +599,32 @@ export function UserMainBack() {
         {
             label: "Профиль",
             icon: <PersonIcon sx={{ mr: 1, color: "#283618" }} />,
-            onClick: () => handleOpenModal("profile"),
+            onClick: () => {
+                handleOpenModal("profile");
+                setSelectedSpecialistUuid("");
+                setSuccess(null);
+                setError(null);
+            },
         },
         {
             label: "Создать специалиста",
             icon: <AddCircleIcon sx={{ mr: 1, color: "#283618" }} />,
-            onClick: () => handleOpenModal("specialist"),
+            onClick: () => {
+                handleOpenModal("specialist");
+                setSelectedSpecialistUuid("");
+                setSuccess(null);
+                setError(null);
+            },
         },
         {
             label: "Мои специалисты",
             icon: <ListIcon sx={{ mr: 1, color: "#283618" }} />,
             onClick: handleSpecialistsClick,
+        },
+        {
+            label: "Мои отклики",
+            icon: <BookmarkIcon sx={{ mr: 1, color: "#283618" }} />,
+            onClick: handleApplicationsClick,
         },
         {
             label: "Выйти",
@@ -523,13 +638,15 @@ export function UserMainBack() {
             fetchUserData();
             if (viewMode === "vacancies") {
                 fetchVacancies(page);
-            } else {
+            } else if (viewMode === "specialists") {
                 fetchSpecialists(page);
+            } else if (viewMode === "applications" && selectedSpecialistUuid) {
+                fetchApplications(page, selectedSpecialistUuid);
             }
         } else {
             navigate("/signin");
         }
-    }, [isAuthenticated, navigate, page, viewMode]);
+    }, [isAuthenticated, navigate, page, viewMode, selectedSpecialistUuid]);
 
     return (
         <Box className={styles.loginBackground}>
@@ -544,8 +661,41 @@ export function UserMainBack() {
                     >
                         {viewMode === "vacancies"
                             ? "Вакансии сейчас"
-                            : "Мои специалисты"}
+                            : viewMode === "specialists"
+                            ? "Мои специалисты"
+                            : "Мои отклики"}
                     </Typography>
+                    {(viewMode === "vacancies" ||
+                        viewMode === "applications") && (
+                        <FormControl sx={{ mb: 2, minWidth: 200 }}>
+                            <InputLabel>Выберите специалиста</InputLabel>
+                            <Select
+                                value={selectedSpecialistUuid}
+                                label="Выберите специалиста"
+                                onChange={(e) => {
+                                    setSelectedSpecialistUuid(e.target.value);
+                                    if (
+                                        viewMode === "applications" &&
+                                        e.target.value
+                                    ) {
+                                        fetchApplications(1, e.target.value);
+                                    }
+                                }}
+                            >
+                                <MenuItem value="">
+                                    <em>Не выбрано</em>
+                                </MenuItem>
+                                {specialists.map((specialist) => (
+                                    <MenuItem
+                                        key={specialist.uuid}
+                                        value={specialist.uuid}
+                                    >
+                                        {specialist.position}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    )}
                     {error && (
                         <Alert severity="error" sx={{ mb: 2 }}>
                             {error}
@@ -558,30 +708,45 @@ export function UserMainBack() {
                     )}
                     {viewMode === "vacancies" ? (
                         <>
-                            {vacancies.length === 0 && !error && (
+                            {!selectedSpecialistUuid && !error && (
                                 <Typography
                                     variant="body1"
                                     color="text.secondary"
                                 >
-                                    Нет доступных вакансий
+                                    Выберите специалиста для просмотра вакансий
                                 </Typography>
                             )}
-                            {vacancies.map((vacancy) => (
-                                <VacancyCard
-                                    key={vacancy.uuid}
-                                    vacancy={vacancy}
-                                    onApply={handleApply}
-                                />
-                            ))}
-                            {totalVacancies > limit && (
-                                <PaginationComponent
-                                    count={Math.ceil(totalVacancies / limit)}
-                                    page={page}
-                                    onChange={(e, value) => setPage(value)}
-                                />
-                            )}
+                            {selectedSpecialistUuid &&
+                                vacancies.length === 0 &&
+                                !error && (
+                                    <Typography
+                                        variant="body1"
+                                        color="text.secondary"
+                                    >
+                                        Нет доступных вакансий
+                                    </Typography>
+                                )}
+                            {selectedSpecialistUuid &&
+                                vacancies.map((vacancy) => (
+                                    <VacancyCard
+                                        key={vacancy.uuid}
+                                        vacancy={vacancy}
+                                        onApply={createApplication}
+                                        specialistUuid={selectedSpecialistUuid}
+                                    />
+                                ))}
+                            {selectedSpecialistUuid &&
+                                totalVacancies > limit && (
+                                    <PaginationComponent
+                                        count={Math.ceil(
+                                            totalVacancies / limit
+                                        )}
+                                        page={page}
+                                        onChange={(e, value) => setPage(value)}
+                                    />
+                                )}
                         </>
-                    ) : (
+                    ) : viewMode === "specialists" ? (
                         <>
                             {specialists.length === 0 && !error && (
                                 <Typography
@@ -610,6 +775,31 @@ export function UserMainBack() {
                             {totalSpecialists > limit && (
                                 <PaginationComponent
                                     count={Math.ceil(totalSpecialists / limit)}
+                                    page={page}
+                                    onChange={(e, value) => setPage(value)}
+                                />
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            {applications.length === 0 && !error && (
+                                <Typography
+                                    variant="body1"
+                                    color="text.secondary"
+                                >
+                                    Нет отправленных откликов
+                                </Typography>
+                            )}
+                            {applications.map((application) => (
+                                <ApplicationCard
+                                    key={application.o_id}
+                                    application={application}
+                                    vacancy={application.vacancy}
+                                />
+                            ))}
+                            {totalApplications > limit && (
+                                <PaginationComponent
+                                    count={Math.ceil(totalApplications / limit)}
                                     page={page}
                                     onChange={(e, value) => setPage(value)}
                                 />

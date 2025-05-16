@@ -46,6 +46,11 @@ const employmentTypesMap = {
     "part-time": "Частичная занятость",
 };
 
+const formatDateToApi = (date) => {
+    if (!date) return null;
+    return date.toISOString().split("T")[0];
+};
+
 const SpecialistCard = ({
     specialist,
     onEdit,
@@ -79,7 +84,14 @@ const SpecialistCard = ({
             newExperience.start_date &&
             newExperience.end_date
         ) {
-            onAddExperience(specialist.uuid, newExperience);
+            const experienceToSend = {
+                company_name: newExperience.company_name,
+                position: newExperience.position,
+                start_date: formatDateToApi(newExperience.start_date),
+                end_date: formatDateToApi(newExperience.end_date),
+            };
+
+            onAddExperience(specialist.uuid, experienceToSend);
             setNewExperience({
                 company_name: "",
                 position: "",
@@ -91,9 +103,16 @@ const SpecialistCard = ({
     };
 
     const formatDate = (dateStr) => {
-        return dateStr
-            ? new Date(dateStr).toLocaleDateString("ru-RU")
-            : "Не указано";
+        if (!dateStr) return "Не указано";
+        if (
+            typeof dateStr === "string" &&
+            dateStr.match(/^\d{4}-\d{2}-\d{2}$/)
+        ) {
+            const [year, month, day] = dateStr.split("-");
+            return `${day}.${month}.${year}`;
+        }
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("ru-RU");
     };
 
     return (
