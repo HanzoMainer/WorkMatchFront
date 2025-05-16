@@ -9,6 +9,11 @@ import {
     InputLabel,
     Select,
     MenuItem,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
 } from "@mui/material";
 import { AuthContext } from "../../../../context/AuthContext";
 import styles from "./style.module.css";
@@ -61,6 +66,8 @@ export function UserMainBack() {
     const [totalSpecialists, setTotalSpecialists] = useState(0);
     const [totalApplications, setTotalApplications] = useState(0);
     const [viewMode, setViewMode] = useState("vacancies");
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+    const [applicationToDelete, setApplicationToDelete] = useState(null);
     const limit = 3;
 
     const fetchVacancies = async (pageNum) => {
@@ -198,7 +205,7 @@ export function UserMainBack() {
                 email: data.email || "",
                 username: data.username || "",
             });
-            fetchSpecialists(1); 
+            fetchSpecialists(1);
         } catch (err) {
             setError(err.message);
             if (err.message.includes("Токен")) {
@@ -522,6 +529,57 @@ export function UserMainBack() {
         }
     };
 
+    const deleteApplication = async (specialistUuid, vacancyUuid) => {
+        try {
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/applications/${specialistUuid}/${vacancyUuid}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось удалить отклик`
+                );
+            }
+            setSuccess("Отклик успешно удален");
+            setError(null);
+            if (selectedSpecialistUuid) {
+                fetchApplications(page, selectedSpecialistUuid);
+            }
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+            setTimeout(() => setError(null), 3000);
+        }
+    };
+
+    const handleOpenDeleteDialog = (specialistUuid, vacancyUuid) => {
+        setApplicationToDelete({ specialistUuid, vacancyUuid });
+        setOpenDeleteDialog(true);
+    };
+
+    const handleCloseDeleteDialog = () => {
+        setOpenDeleteDialog(false);
+        setApplicationToDelete(null);
+    };
+
+    const handleConfirmDelete = () => {
+        if (applicationToDelete) {
+            deleteApplication(
+                applicationToDelete.specialistUuid,
+                applicationToDelete.vacancyUuid
+            );
+        }
+        handleCloseDeleteDialog();
+    };
+
     const handleLogout = () => {
         logout();
         navigate("/signin");
@@ -795,15 +853,14 @@ export function UserMainBack() {
                                     key={application.o_id}
                                     application={application}
                                     vacancy={application.vacancy}
+                                    onDelete={() =>
+                                        handleOpenDeleteDialog(
+                                            application.specialist_uuid,
+                                            application.vacancy_uuid
+                                        )
+                                    }
                                 />
                             ))}
-                            {totalApplications > limit && (
-                                <PaginationComponent
-                                    count={Math.ceil(totalApplications / limit)}
-                                    page={page}
-                                    onChange={(e, value) => setPage(value)}
-                                />
-                            )}
                         </>
                     )}
                 </Box>
@@ -841,6 +898,35 @@ export function UserMainBack() {
                     )}
                 </Box>
             </Modal>
+            <Dialog
+                open={openDeleteDialog}
+                onClose={handleCloseDeleteDialog}
+                aria-labelledby="delete-dialog-title"
+            >
+                <DialogTitle id="delete-dialog-title">
+                    Подтверждение удаления
+                </DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Вы уверены, что хотите удалить этот отклик?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={handleCloseDeleteDialog}
+                        sx={{ color: "#283618" }}
+                    >
+                        Отмена
+                    </Button>
+                    <Button
+                        onClick={handleConfirmDelete}
+                        variant="contained"
+                        sx={{ backgroundColor: "#d32f2f" }}
+                    >
+                        Удалить
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }
