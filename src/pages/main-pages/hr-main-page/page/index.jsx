@@ -651,6 +651,7 @@ export function HRMainBack() {
                                     onViewResponses={() =>
                                         handleViewResponses(vacancy.uuid)
                                     }
+                                    deleteVacancy={deleteVacancy}
                                 />
                             ))}
                             {totalVacancies > 0 && (
@@ -730,13 +731,6 @@ export function HRMainBack() {
                             error={error}
                             success={success}
                             employmentTypes={employmentTypes}
-                        />
-                    )}
-                    {modalType === "deleteVacancy" && selectedVacancy && (
-                        <DeleteVacancyModal
-                            selectedVacancy={selectedVacancy}
-                            onDelete={deleteVacancy}
-                            onClose={handleCloseModal}
                         />
                     )}
                 </Box>

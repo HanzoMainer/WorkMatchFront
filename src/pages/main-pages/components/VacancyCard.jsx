@@ -99,16 +99,11 @@ const VacancyCard = ({
                 {deleteVacancy && (
                     <Button
                         size="small"
-                        variant="outlined"
-                        sx={{
-                            backgroundColor: "#d32f2f",
-                            gap: 1,
-                            color: "white",
-                            borderColor: "#d32f2f",
-                        }}
+                        variant="contained"
+                        style={{ backgroundColor: "#d32f2f" }}
                         onClick={() => deleteVacancy(vacancy.uuid)}
                     >
-                        Удалить вакансию
+                        Удалить
                     </Button>
                 )}
             </CardActions>
