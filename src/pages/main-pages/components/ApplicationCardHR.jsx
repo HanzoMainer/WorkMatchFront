@@ -27,10 +27,6 @@ const ApplicationCardHR = ({ application, specialist, vacancy }) => {
                 <Typography color="#606c38">
                     О себе: {specialist?.about_me || "Не указано"}
                 </Typography>
-                <Typography color="#606c38">
-                    Тип занятости:{" "}
-                    {specialist?.employment_type_str || "Не указано"}
-                </Typography>
                 <Box sx={{ mt: 1 }}>
                     <Typography color="#606c38" sx={{ mb: 1 }}>
                         Навыки:
@@ -61,22 +57,35 @@ const ApplicationCardHR = ({ application, specialist, vacancy }) => {
                     <Typography color="#606c38" sx={{ mb: 1 }}>
                         Опыт работы:
                     </Typography>
-                    {specialist?.experience &&
-                    specialist.experience.length > 0 ? (
-                        specialist.experience.map((exp, index) => (
-                            <Box key={index} sx={{ mb: 1 }}>
+                    {specialist?.experiences &&
+                    specialist.experiences.length > 0 ? (
+                        specialist.experiences.map((exp) => (
+                            <Box key={exp.uuid} sx={{ mb: 2 }}>
                                 <Typography color="#606c38">
-                                    Компания: {exp.company || "Не указано"}
+                                    Компания: {exp.company_name || "Не указано"}
                                 </Typography>
                                 <Typography color="#606c38">
                                     Должность: {exp.position || "Не указано"}
                                 </Typography>
                                 <Typography color="#606c38">
-                                    Период: {exp.start_date || "Не указано"} -{" "}
-                                    {exp.end_date || "по настоящее время"}
-                                </Typography>
-                                <Typography color="#606c38">
-                                    Описание: {exp.description || "Не указано"}
+                                    Период:{" "}
+                                    {exp.start_date
+                                        ? new Date(
+                                              exp.start_date
+                                          ).toLocaleDateString("ru-RU", {
+                                              month: "long",
+                                              year: "numeric",
+                                          })
+                                        : "Не указано"}{" "}
+                                    -{" "}
+                                    {exp.end_date
+                                        ? new Date(
+                                              exp.end_date
+                                          ).toLocaleDateString("ru-RU", {
+                                              month: "long",
+                                              year: "numeric",
+                                          })
+                                        : "по настоящее время"}
                                 </Typography>
                             </Box>
                         ))
@@ -86,9 +95,6 @@ const ApplicationCardHR = ({ application, specialist, vacancy }) => {
                         </Typography>
                     )}
                 </Box>
-                <Typography color="#606c38">
-                    ID отклика: {application.o_id}
-                </Typography>
             </CardContent>
         </Card>
     );
