@@ -92,7 +92,7 @@ export function HRMainBack() {
                 email: data.email || "",
                 username: data.username || "",
             });
-            fetchVacancies(1); 
+            fetchVacancies(1);
         } catch (err) {
             setError(err.message);
             if (err.message.includes("Токен")) {
@@ -353,6 +353,8 @@ export function HRMainBack() {
             if (!vacancyData.requirements)
                 throw new Error("Требования обязательны");
             if (!vacancyData.conditions) throw new Error("Условия обязательны");
+            if (!vacancyData.employment_type_str)
+                throw new Error("Тип занятости обязателен");
             const salary = parseInt(vacancyData.salary, 10);
             if (isNaN(salary) || salary < 1)
                 throw new Error("Зарплата должна быть положительным числом");
@@ -466,7 +468,7 @@ export function HRMainBack() {
     const handleApplicationsClick = () => {
         setViewMode("applications");
         setPage(1);
-        setApplications([]); 
+        setApplications([]);
         setSelectedVacancyUuid("");
         setSuccess(null);
         setError(null);
@@ -569,7 +571,7 @@ export function HRMainBack() {
                                             e.target.value
                                         );
                                     } else {
-                                        setApplications([]); 
+                                        setApplications([]);
                                         setTotalApplications(0);
                                     }
                                 }}

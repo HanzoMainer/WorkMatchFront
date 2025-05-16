@@ -35,10 +35,17 @@ const VacancyDetailsModal = ({
             </Typography>
             <TextField
                 label="Название вакансии"
-                value={selectedVacancy.title}
+                value={isEditing ? vacancyData.title : selectedVacancy.title}
+                onChange={(e) =>
+                    isEditing &&
+                    setVacancyData({
+                        ...vacancyData,
+                        title: e.target.value,
+                    })
+                }
                 fullWidth
                 margin="normal"
-                disabled
+                disabled={!isEditing}
             />
             <TextField
                 label="Описание"
@@ -115,18 +122,19 @@ const VacancyDetailsModal = ({
                 <InputLabel>Тип занятости</InputLabel>
                 <Select
                     value={
-                        (isEditing
-                            ? vacancyData.employment_type
-                            : selectedVacancy.employment_type) || ""
+                        isEditing
+                            ? vacancyData.employment_type_str || ""
+                            : selectedVacancy.employment_type_str || ""
                     }
                     label="Тип занятости"
                     onChange={(e) =>
                         isEditing &&
                         setVacancyData({
                             ...vacancyData,
-                            employment_type: e.target.value,
+                            employment_type_str: e.target.value,
                         })
                     }
+                    required
                 >
                     {employmentTypes.map((type) => (
                         <MenuItem key={type.value} value={type.value}>
