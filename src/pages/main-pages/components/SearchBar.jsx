@@ -1,7 +1,16 @@
 import { TextField, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
-const SearchBar = ({ searchQuery, setSearchQuery, placeholder }) => {
+const SearchBar = ({ searchQuery, setSearchQuery, placeholder, onSearch }) => {
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (typeof onSearch === "function") {
+                onSearch();
+            }
+        }
+    };
+
     return (
         <TextField
             fullWidth
@@ -9,6 +18,7 @@ const SearchBar = ({ searchQuery, setSearchQuery, placeholder }) => {
             placeholder={placeholder || "Поиск..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={handleKeyPress}
             InputProps={{
                 startAdornment: (
                     <InputAdornment position="start">

@@ -11,7 +11,22 @@ import { Link } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import styles from "./../hr-main-page/page/style.module.css";
 
-const Header = ({ user, to = "/usermain", searchQuery, setSearchQuery }) => {
+const Header = ({
+    user,
+    to = "/usermain",
+    searchQuery,
+    setSearchQuery,
+    onSearch,
+}) => {
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (typeof onSearch === "function") {
+                onSearch();
+            }
+        }
+    };
+
     return (
         <AppBar
             position="static"
@@ -42,6 +57,7 @@ const Header = ({ user, to = "/usermain", searchQuery, setSearchQuery }) => {
                         placeholder="Поиск..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyPress={handleKeyPress}
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">

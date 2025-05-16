@@ -68,23 +68,28 @@ export function UserMainBack() {
     const [viewMode, setViewMode] = useState("vacancies");
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [applicationToDelete, setApplicationToDelete] = useState(null);
-    const [searchQuery, setSearchQuery] = useState(""); 
+    const [searchQuery, setSearchQuery] = useState("");
     const limit = 3;
 
-    const fetchVacancies = async (pageNum) => {
+    const fetchVacancies = async (pageNum, query = "") => {
         try {
             const skip = (pageNum - 1) * limit;
             let token = localStorage.getItem("access_token");
-            let response = await fetch(
-                `http://localhost:8000/v1/vacancies/?skip=${skip}&limit=${limit}`,
-                {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
+            let url = `http://localhost:8000/v1/vacancies/?skip=${skip}&limit=${limit}`;
+
+            if (query.trim() !== "") {
+                url = `http://localhost:8000/v1/vacancies/search?query=${encodeURIComponent(
+                    query
+                )}&skip=${skip}&limit=${limit}`;
+            }
+
+            let response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
             if (!response.ok) {
                 throw new Error(
                     `Ошибка ${response.status}: Не удалось загрузить вакансии`
@@ -561,6 +566,36 @@ export function UserMainBack() {
         }
     };
 
+    const searchVacancies = async (query, skip, limit) => {
+        try {
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/vacancies/search?query=${query}&skip=${skip}&limit=${limit}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось выполнить поиск`
+                );
+            }
+            setSuccess("Поиск выполнен успешно");
+            const data = await response.json();
+            setVacancies(data.Vacancies || []);
+            setTotalVacancies(data.Count || 0);
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+            setTimeout(() => setError(null), 3000);
+        }
+    };
+
     const handleOpenDeleteDialog = (specialistUuid, vacancyUuid) => {
         setApplicationToDelete({ specialistUuid, vacancyUuid });
         setOpenDeleteDialog(true);
@@ -723,6 +758,80 @@ export function UserMainBack() {
             .includes(searchQuery.toLowerCase())
     );
 
+    const handleSearch = async () => {
+        if (searchQuery.trim() === "") {
+            if (viewMode === "vacancies") {
+                fetchVacancies(1);
+            } else if (viewMode === "specialists") {
+                fetchSpecialists(1);
+            } else if (viewMode === "applications" && selectedSpecialistUuid) {
+                fetchApplications(1, selectedSpecialistUuid);
+            }
+            return;
+        }
+
+        const skip = (page - 1) * limit;
+        try {
+            let token = localStorage.getItem("access_token");
+            let url;
+
+            if (viewMode === "vacancies") {
+                url = `http://localhost:8000/v1/vacancies/search?query=${encodeURIComponent(
+                    searchQuery
+                )}&skip=${skip}&limit=${limit}`;
+            } else if (viewMode === "specialists") {
+                url = `http://localhost:8000/v1/specialist/search?query=${encodeURIComponent(
+                    searchQuery
+                )}&skip=${skip}&limit=${limit}`;
+            } else if (viewMode === "applications") {
+                url = `http://localhost:8000/v1/applications/search?query=${encodeURIComponent(
+                    searchQuery
+                )}&skip=${skip}&limit=${limit}`;
+            }
+
+            let response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось выполнить поиск`
+                );
+            }
+
+            const data = await response.json();
+
+            if (viewMode === "vacancies") {
+                setVacancies(data.Vacancies || []);
+                setTotalVacancies(data.Count || 0);
+            } else if (viewMode === "specialists") {
+                setSpecialists(data.Specialists || []);
+                setTotalSpecialists(data.Count || 0);
+            } else if (viewMode === "applications") {
+                setApplications(data.Applications || []);
+                setTotalApplications(data.Count || 0);
+            }
+
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            if (viewMode === "vacancies") {
+                setVacancies([]);
+                setTotalVacancies(0);
+            } else if (viewMode === "specialists") {
+                setSpecialists([]);
+                setTotalSpecialists(0);
+            } else if (viewMode === "applications") {
+                setApplications([]);
+                setTotalApplications(0);
+            }
+        }
+    };
+
     useEffect(() => {
         if (isAuthenticated) {
             fetchUserData();
@@ -745,6 +854,7 @@ export function UserMainBack() {
                 to="/usermain"
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
+                onSearch={handleSearch} 
             />
             <Box className={styles.bodyLeg}>
                 <Sidebar items={sidebarItems} />
@@ -812,7 +922,7 @@ export function UserMainBack() {
                                 </Typography>
                             )}
                             {selectedSpecialistUuid &&
-                                filteredVacancies.length === 0 &&
+                                vacancies.length === 0 &&
                                 !error && (
                                     <Typography
                                         variant="body1"
@@ -822,7 +932,7 @@ export function UserMainBack() {
                                     </Typography>
                                 )}
                             {selectedSpecialistUuid &&
-                                filteredVacancies.map((vacancy) => (
+                                vacancies.map((vacancy) => (
                                     <VacancyCard
                                         key={vacancy.uuid}
                                         vacancy={vacancy}

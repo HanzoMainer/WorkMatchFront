@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { AuthContext } from "../../../../context/AuthContext";
 import styles from "./style.module.css";
-import Header from "../../components/Header";
+import HrHeader from "../../components/HrHeader";
 import Sidebar from "../../components/Sidebar";
 import VacancyCard from "../../components/VacancyCard";
 import ApplicationCardHR from "../../components/ApplicationCardHR";
@@ -544,7 +544,7 @@ export function HRMainBack() {
 
     return (
         <Box className={styles.loginBackground}>
-            <Header user={user} to="/hrmain" />
+            <HrHeader user={user} to="/hrmain" />
             <Box className={styles.bodyLeg}>
                 <Sidebar items={sidebarItems} />
                 <Box className={styles.jobList}>
