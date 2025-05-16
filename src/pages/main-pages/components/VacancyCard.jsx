@@ -5,10 +5,19 @@ import {
     Typography,
     Button,
 } from "@mui/material";
-import { Info as InfoIcon } from "@mui/icons-material";
+import {
+    Info as InfoIcon,
+    Bookmark as BookmarkIcon,
+} from "@mui/icons-material";
 import styles from "./../hr-main-page/page/style.module.css";
 
-const VacancyCard = ({ vacancy, onInfoClick, onViewResponses, onApply }) => {
+const VacancyCard = ({
+    vacancy,
+    onInfoClick,
+    onViewResponses,
+    onApply,
+    specialistUuid,
+}) => {
     return (
         <Card
             className={styles.jobCard}
@@ -65,8 +74,23 @@ const VacancyCard = ({ vacancy, onInfoClick, onViewResponses, onApply }) => {
                     <Button
                         size="small"
                         variant="contained"
+                        startIcon={<BookmarkIcon />}
                         style={{ backgroundColor: "#283618" }}
-                        onClick={() => onApply(vacancy)}
+                        onClick={() => onApply(specialistUuid, vacancy.uuid)}
+                        disabled={!specialistUuid}
+                        sx={{
+                            "&.Mui-disabled": {
+                                color: "white",
+                                boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)",
+                            },
+                            "&:hover": {
+                                boxShadow: "0 12px 20px rgba(0, 0, 0, 0.3)",
+                                transform: "translateY(-2px)",
+                                transition: "all 0.3s ease",
+                            },
+                            transition: "all 0.3s ease",
+                            transform: "translateY(0)",
+                        }}
                     >
                         Откликнуться
                     </Button>
