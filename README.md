@@ -23,13 +23,19 @@ WorkMatchFront предоставляет интерфейс для пользо
    ```bash
    git clone https://github.com/HanzoMainer/WorkMatchFront.git && cd WorkMatchFront
 
-2. **Установите зависимости:**
+2. **Установите необходимое:**
+
+    Убедитесь, что на вашем компьютере установлен:
+
+    - [Node.js](https://nodejs.org/)
+
+3. **Установите зависимости:**
 
    ```bash
    npm install
    ```
 
-3. **Запустите приложение:**
+4. **Запустите приложение:**
 
    ```bash
    npm run dev
@@ -45,7 +51,7 @@ WorkMatchFront предоставляет интерфейс для пользо
 
 ## 🧩 Backend
 
-- 📦 **Backend проекта:** [MediaGrab (Backend)](https://github.com/actusnileh/MediaGrab)
+- 📦 **Backend проекта:** [WorkMatchAPI](https://github.com/actusnileh/WorkMatchAPI)
 
 ---
 
