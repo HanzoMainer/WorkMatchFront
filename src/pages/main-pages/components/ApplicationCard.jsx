@@ -19,7 +19,7 @@ const ApplicationCard = ({ application, vacancy, onDelete }) => {
                     Вакансия: {vacancy?.title || "Неизвестная вакансия"}
                 </Typography>
                 <Typography color="#606c38">
-                    Зарплата: {vacancy?.salary || "Не указано"}
+                    Зарплата: {vacancy?.salary || "Не указано"} ₽
                 </Typography>
                 <Typography color="#606c38">
                     ID отклика: {application.o_id}

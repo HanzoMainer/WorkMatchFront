@@ -330,6 +330,35 @@ export function UserMainBack() {
         }
     };
 
+    const deleteSpecialist = async (specialistUuid) => {
+        try {
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/specialist/${specialistUuid}
+                `,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось удалить специалиста`
+                );
+            }
+            setSuccess("Специалист успешно удален");
+            setError(null);
+            fetchSpecialists(page);
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+        }
+    };
+
     const editSpecialist = async (e) => {
         e.preventDefault();
         try {
@@ -854,7 +883,7 @@ export function UserMainBack() {
                 to="/usermain"
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
-                onSearch={handleSearch} 
+                onSearch={handleSearch}
             />
             <Box className={styles.bodyLeg}>
                 <Sidebar items={sidebarItems} />
@@ -975,6 +1004,7 @@ export function UserMainBack() {
                                     onDeleteSkill={deleteSkill}
                                     onAddExperience={addExperience}
                                     onDeleteExperience={deleteExperience}
+                                    onDelete={deleteSpecialist}
                                 />
                             ))}
                             {totalSpecialists > limit && (
