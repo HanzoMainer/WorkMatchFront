@@ -58,6 +58,7 @@ const SpecialistCard = ({
     onDeleteSkill,
     onAddExperience,
     onDeleteExperience,
+    onDelete,
 }) => {
     const [isAddingSkill, setIsAddingSkill] = useState(false);
     const [newSkill, setNewSkill] = useState("");
@@ -246,6 +247,19 @@ const SpecialistCard = ({
                         }
                     >
                         {isAddingExperience ? "Отмена" : "Добавить опыт"}
+                    </Button>
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                            backgroundColor: "#d32f2f",
+                            gap: 1,
+                            color: "white",
+                            borderColor: "#d32f2f",
+                        }}
+                        onClick={() => onDelete(specialist.uuid)}
+                    >
+                        Удалить специалиста
                     </Button>
                 </CardActions>
                 <Collapse in={isAddingSkill}>

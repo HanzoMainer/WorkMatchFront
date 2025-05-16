@@ -9,6 +9,11 @@ import {
     InputLabel,
     Select,
     MenuItem,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
 } from "@mui/material";
 import { AuthContext } from "../../../../context/AuthContext";
 import styles from "./style.module.css";
@@ -61,22 +66,30 @@ export function UserMainBack() {
     const [totalSpecialists, setTotalSpecialists] = useState(0);
     const [totalApplications, setTotalApplications] = useState(0);
     const [viewMode, setViewMode] = useState("vacancies");
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+    const [applicationToDelete, setApplicationToDelete] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
     const limit = 3;
 
-    const fetchVacancies = async (pageNum) => {
+    const fetchVacancies = async (pageNum, query = "") => {
         try {
             const skip = (pageNum - 1) * limit;
             let token = localStorage.getItem("access_token");
-            let response = await fetch(
-                `http://localhost:8000/v1/vacancies/?skip=${skip}&limit=${limit}`,
-                {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
+            let url = `http://localhost:8000/v1/vacancies/?skip=${skip}&limit=${limit}`;
+
+            if (query.trim() !== "") {
+                url = `http://localhost:8000/v1/vacancies/search?query=${encodeURIComponent(
+                    query
+                )}&skip=${skip}&limit=${limit}`;
+            }
+
+            let response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
             if (!response.ok) {
                 throw new Error(
                     `Ошибка ${response.status}: Не удалось загрузить вакансии`
@@ -198,7 +211,7 @@ export function UserMainBack() {
                 email: data.email || "",
                 username: data.username || "",
             });
-            fetchSpecialists(1); 
+            fetchSpecialists(1);
         } catch (err) {
             setError(err.message);
             if (err.message.includes("Токен")) {
@@ -310,6 +323,35 @@ export function UserMainBack() {
             });
             setOpenModal(false);
             fetchSpecialists(1);
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+        }
+    };
+
+    const deleteSpecialist = async (specialistUuid) => {
+        try {
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/specialist/${specialistUuid}
+                `,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось удалить специалиста`
+                );
+            }
+            setSuccess("Специалист успешно удален");
+            setError(null);
+            fetchSpecialists(page);
             setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
@@ -522,10 +564,92 @@ export function UserMainBack() {
         }
     };
 
+    const deleteApplication = async (specialistUuid, vacancyUuid) => {
+        try {
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/applications/${specialistUuid}/${vacancyUuid}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось удалить отклик`
+                );
+            }
+            setSuccess("Отклик успешно удален");
+            setError(null);
+            if (selectedSpecialistUuid) {
+                fetchApplications(page, selectedSpecialistUuid);
+            }
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+            setTimeout(() => setError(null), 3000);
+        }
+    };
+
+    const searchVacancies = async (query, skip, limit) => {
+        try {
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/vacancies/search?query=${query}&skip=${skip}&limit=${limit}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось выполнить поиск`
+                );
+            }
+            setSuccess("Поиск выполнен успешно");
+            const data = await response.json();
+            setVacancies(data.Vacancies || []);
+            setTotalVacancies(data.Count || 0);
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+            setTimeout(() => setError(null), 3000);
+        }
+    };
+
+    const handleOpenDeleteDialog = (specialistUuid, vacancyUuid) => {
+        setApplicationToDelete({ specialistUuid, vacancyUuid });
+        setOpenDeleteDialog(true);
+    };
+
+    const handleCloseDeleteDialog = () => {
+        setOpenDeleteDialog(false);
+        setApplicationToDelete(null);
+    };
+
+    const handleConfirmDelete = () => {
+        if (applicationToDelete) {
+            deleteApplication(
+                applicationToDelete.specialistUuid,
+                applicationToDelete.vacancyUuid
+            );
+        }
+        handleCloseDeleteDialog();
+    };
+
     const handleLogout = () => {
         logout();
         navigate("/signin");
         setSelectedSpecialistUuid("");
+        setSearchQuery("");
         setSuccess(null);
         setError(null);
     };
@@ -548,6 +672,7 @@ export function UserMainBack() {
         }
         setOpenModal(true);
         setSelectedSpecialistUuid("");
+        setSearchQuery("");
         setError(null);
         setSuccess(null);
     };
@@ -569,6 +694,7 @@ export function UserMainBack() {
         setPage(1);
         fetchVacancies(1);
         setSelectedSpecialistUuid("");
+        setSearchQuery("");
         setSuccess(null);
         setError(null);
     };
@@ -578,6 +704,7 @@ export function UserMainBack() {
         setPage(1);
         fetchSpecialists(1);
         setSelectedSpecialistUuid("");
+        setSearchQuery("");
         setSuccess(null);
         setError(null);
     };
@@ -586,6 +713,7 @@ export function UserMainBack() {
         setViewMode("applications");
         setPage(1);
         setSelectedSpecialistUuid("");
+        setSearchQuery("");
         setSuccess(null);
         setError(null);
     };
@@ -602,6 +730,7 @@ export function UserMainBack() {
             onClick: () => {
                 handleOpenModal("profile");
                 setSelectedSpecialistUuid("");
+                setSearchQuery("");
                 setSuccess(null);
                 setError(null);
             },
@@ -612,6 +741,7 @@ export function UserMainBack() {
             onClick: () => {
                 handleOpenModal("specialist");
                 setSelectedSpecialistUuid("");
+                setSearchQuery("");
                 setSuccess(null);
                 setError(null);
             },
@@ -633,6 +763,104 @@ export function UserMainBack() {
         },
     ];
 
+    const filteredVacancies = vacancies.filter(
+        (vacancy) =>
+            vacancy.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            vacancy.description
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase())
+    );
+
+    const filteredSpecialists = specialists.filter(
+        (specialist) =>
+            specialist.position
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+            specialist.about_me
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase())
+    );
+
+    const filteredApplications = applications.filter((application) =>
+        application.vacancy?.title
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase())
+    );
+
+    const handleSearch = async () => {
+        if (searchQuery.trim() === "") {
+            if (viewMode === "vacancies") {
+                fetchVacancies(1);
+            } else if (viewMode === "specialists") {
+                fetchSpecialists(1);
+            } else if (viewMode === "applications" && selectedSpecialistUuid) {
+                fetchApplications(1, selectedSpecialistUuid);
+            }
+            return;
+        }
+
+        const skip = (page - 1) * limit;
+        try {
+            let token = localStorage.getItem("access_token");
+            let url;
+
+            if (viewMode === "vacancies") {
+                url = `http://localhost:8000/v1/vacancies/search?query=${encodeURIComponent(
+                    searchQuery
+                )}&skip=${skip}&limit=${limit}`;
+            } else if (viewMode === "specialists") {
+                url = `http://localhost:8000/v1/specialist/search?query=${encodeURIComponent(
+                    searchQuery
+                )}&skip=${skip}&limit=${limit}`;
+            } else if (viewMode === "applications") {
+                url = `http://localhost:8000/v1/applications/search?query=${encodeURIComponent(
+                    searchQuery
+                )}&skip=${skip}&limit=${limit}`;
+            }
+
+            let response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось выполнить поиск`
+                );
+            }
+
+            const data = await response.json();
+
+            if (viewMode === "vacancies") {
+                setVacancies(data.Vacancies || []);
+                setTotalVacancies(data.Count || 0);
+            } else if (viewMode === "specialists") {
+                setSpecialists(data.Specialists || []);
+                setTotalSpecialists(data.Count || 0);
+            } else if (viewMode === "applications") {
+                setApplications(data.Applications || []);
+                setTotalApplications(data.Count || 0);
+            }
+
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            if (viewMode === "vacancies") {
+                setVacancies([]);
+                setTotalVacancies(0);
+            } else if (viewMode === "specialists") {
+                setSpecialists([]);
+                setTotalSpecialists(0);
+            } else if (viewMode === "applications") {
+                setApplications([]);
+                setTotalApplications(0);
+            }
+        }
+    };
+
     useEffect(() => {
         if (isAuthenticated) {
             fetchUserData();
@@ -650,7 +878,13 @@ export function UserMainBack() {
 
     return (
         <Box className={styles.loginBackground}>
-            <Header user={user} to="/usermain" />
+            <Header
+                user={user}
+                to="/usermain"
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                onSearch={handleSearch}
+            />
             <Box className={styles.bodyLeg}>
                 <Sidebar items={sidebarItems} />
                 <Box className={styles.jobList}>
@@ -748,7 +982,7 @@ export function UserMainBack() {
                         </>
                     ) : viewMode === "specialists" ? (
                         <>
-                            {specialists.length === 0 && !error && (
+                            {filteredSpecialists.length === 0 && !error && (
                                 <Typography
                                     variant="body1"
                                     color="text.secondary"
@@ -756,7 +990,7 @@ export function UserMainBack() {
                                     Вы пока не создали специалистов
                                 </Typography>
                             )}
-                            {specialists.map((specialist) => (
+                            {filteredSpecialists.map((specialist) => (
                                 <SpecialistCard
                                     key={specialist.uuid}
                                     specialist={specialist}
@@ -770,6 +1004,7 @@ export function UserMainBack() {
                                     onDeleteSkill={deleteSkill}
                                     onAddExperience={addExperience}
                                     onDeleteExperience={deleteExperience}
+                                    onDelete={deleteSpecialist}
                                 />
                             ))}
                             {totalSpecialists > limit && (
@@ -782,7 +1017,7 @@ export function UserMainBack() {
                         </>
                     ) : (
                         <>
-                            {applications.length === 0 && !error && (
+                            {filteredApplications.length === 0 && !error && (
                                 <Typography
                                     variant="body1"
                                     color="text.secondary"
@@ -790,11 +1025,17 @@ export function UserMainBack() {
                                     Нет отправленных откликов
                                 </Typography>
                             )}
-                            {applications.map((application) => (
+                            {filteredApplications.map((application) => (
                                 <ApplicationCard
                                     key={application.o_id}
                                     application={application}
                                     vacancy={application.vacancy}
+                                    onDelete={() =>
+                                        handleOpenDeleteDialog(
+                                            application.specialist_uuid,
+                                            application.vacancy_uuid
+                                        )
+                                    }
                                 />
                             ))}
                             {totalApplications > limit && (
@@ -841,6 +1082,35 @@ export function UserMainBack() {
                     )}
                 </Box>
             </Modal>
+            <Dialog
+                open={openDeleteDialog}
+                onClose={handleCloseDeleteDialog}
+                aria-labelledby="delete-dialog-title"
+            >
+                <DialogTitle id="delete-dialog-title">
+                    Подтверждение удаления
+                </DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Вы уверены, что хотите удалить этот отклик?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={handleCloseDeleteDialog}
+                        sx={{ color: "#283618" }}
+                    >
+                        Отмена
+                    </Button>
+                    <Button
+                        onClick={handleConfirmDelete}
+                        variant="contained"
+                        sx={{ backgroundColor: "#d32f2f" }}
+                    >
+                        Удалить
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

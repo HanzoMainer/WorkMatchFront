@@ -1,7 +1,7 @@
-import { Card, CardContent, Typography } from "@mui/material";
+import { Card, CardContent, Typography, Button, Box } from "@mui/material";
 import styles from "./../hr-main-page/page/style.module.css";
 
-const ApplicationCard = ({ application, vacancy }) => {
+const ApplicationCard = ({ application, vacancy, onDelete }) => {
     return (
         <Card
             className={styles.jobCard}
@@ -19,10 +19,7 @@ const ApplicationCard = ({ application, vacancy }) => {
                     Вакансия: {vacancy?.title || "Неизвестная вакансия"}
                 </Typography>
                 <Typography color="#606c38">
-                    Компания: {vacancy?.company || "Не указано"}
-                </Typography>
-                <Typography color="#606c38">
-                    Зарплата: {vacancy?.salary || "Не указано"}
+                    Зарплата: {vacancy?.salary || "Не указано"} ₽
                 </Typography>
                 <Typography color="#606c38">
                     ID отклика: {application.o_id}
@@ -33,6 +30,15 @@ const ApplicationCard = ({ application, vacancy }) => {
                 <Typography color="#606c38">
                     Вакансия UUID: {application.vacancy_uuid}
                 </Typography>
+                <Box sx={{ mt: 2 }}>
+                    <Button
+                        variant="contained"
+                        sx={{ backgroundColor: "#d32f2f" }}
+                        onClick={onDelete}
+                    >
+                        Удалить отклик
+                    </Button>
+                </Box>
             </CardContent>
         </Card>
     );

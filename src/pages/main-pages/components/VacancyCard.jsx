@@ -17,6 +17,7 @@ const VacancyCard = ({
     onViewResponses,
     onApply,
     specialistUuid,
+    deleteVacancy,
 }) => {
     return (
         <Card
@@ -42,7 +43,7 @@ const VacancyCard = ({
                     Условия: {vacancy.conditions}
                 </Typography>
                 <Typography color="#606c38">
-                    Зарплата: {vacancy.salary}
+                    Зарплата: {vacancy.salary} ₽
                 </Typography>
                 <Typography color="#606c38">
                     Тип занятости: {vacancy.employment_type}
@@ -93,6 +94,16 @@ const VacancyCard = ({
                         }}
                     >
                         Откликнуться
+                    </Button>
+                )}
+                {deleteVacancy && (
+                    <Button
+                        size="small"
+                        variant="contained"
+                        style={{ backgroundColor: "#d32f2f" }}
+                        onClick={() => deleteVacancy(vacancy.uuid)}
+                    >
+                        Удалить
                     </Button>
                 )}
             </CardActions>

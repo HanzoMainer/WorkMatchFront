@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { AuthContext } from "../../../../context/AuthContext";
 import styles from "./style.module.css";
-import Header from "../../components/Header";
+import HrHeader from "../../components/HrHeader";
 import Sidebar from "../../components/Sidebar";
 import VacancyCard from "../../components/VacancyCard";
 import ApplicationCardHR from "../../components/ApplicationCardHR";
@@ -346,6 +346,34 @@ export function HRMainBack() {
         }
     };
 
+    const deleteVacancy = async (vacancyUuid) => {
+        try {
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/vacancies/${vacancyUuid}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось удалить вакансию`
+                );
+            }
+            setSuccess("Вакансия успешно удалена");
+            setError(null);
+            fetchVacancies(page);
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+            setError(err.message);
+            setSuccess(null);
+        }
+    };
+
     const handleSaveChanges = async () => {
         try {
             if (!vacancyData.description)
@@ -544,7 +572,7 @@ export function HRMainBack() {
 
     return (
         <Box className={styles.loginBackground}>
-            <Header user={user} to="/hrmain" />
+            <HrHeader user={user} to="/hrmain" />
             <Box className={styles.bodyLeg}>
                 <Sidebar items={sidebarItems} />
                 <Box className={styles.jobList}>
@@ -623,6 +651,7 @@ export function HRMainBack() {
                                     onViewResponses={() =>
                                         handleViewResponses(vacancy.uuid)
                                     }
+                                    deleteVacancy={deleteVacancy}
                                 />
                             ))}
                             {totalVacancies > 0 && (

@@ -1,8 +1,32 @@
-import { AppBar, Toolbar, Typography, Box, Avatar } from "@mui/material";
+import {
+    AppBar,
+    Toolbar,
+    Typography,
+    Box,
+    Avatar,
+    TextField,
+    InputAdornment,
+} from "@mui/material";
 import { Link } from "react-router-dom";
+import SearchIcon from "@mui/icons-material/Search";
 import styles from "./../hr-main-page/page/style.module.css";
 
-const Header = ({ user, to = "/usermain" }) => {
+const Header = ({
+    user,
+    to = "/usermain",
+    searchQuery,
+    setSearchQuery,
+    onSearch,
+}) => {
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (typeof onSearch === "function") {
+                onSearch();
+            }
+        }
+    };
+
     return (
         <AppBar
             position="static"
@@ -21,13 +45,51 @@ const Header = ({ user, to = "/usermain" }) => {
                         </Link>
                     </Box>
                 </Box>
-                <Typography
-                    variant="h6"
-                    className={styles.textStyle}
-                    sx={{ flexGrow: 1, justifySelf: "center" }}
+                <Box
+                    sx={{
+                        flexGrow: 1,
+                        display: "flex",
+                        justifyContent: "center",
+                    }}
                 >
-                    Найти работу
-                </Typography>
+                    <TextField
+                        variant="outlined"
+                        placeholder="Поиск..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon sx={{ color: "#606c38" }} />
+                                </InputAdornment>
+                            ),
+                            classes: {
+                                root: styles.textStyle,
+                            },
+                        }}
+                        sx={{
+                            mt: 3,
+                            width: "50%",
+                            "& .MuiOutlinedInput-root": {
+                                backgroundColor: "#fefae0",
+                                color: "#283618",
+                                "& fieldset": {
+                                    borderColor: "#606c38",
+                                },
+                                "&:hover fieldset": {
+                                    borderColor: "#283618",
+                                },
+                                "&.Mui-focused fieldset": {
+                                    borderColor: "#283618",
+                                },
+                            },
+                            "& .MuiInputBase-input": {
+                                padding: "8px 14px",
+                            },
+                        }}
+                    />
+                </Box>
                 {user && (
                     <Box
                         sx={{
