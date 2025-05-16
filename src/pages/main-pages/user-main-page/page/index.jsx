@@ -235,6 +235,7 @@ export function UserMainBack() {
             setUser(data);
             setSuccess("Профиль успешно обновлен");
             setError(null);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -270,6 +271,7 @@ export function UserMainBack() {
             setError(null);
             setPasswordData({ old_password: "", new_password: "" });
             setOpenModal(false);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -308,6 +310,7 @@ export function UserMainBack() {
             });
             setOpenModal(false);
             fetchSpecialists(1);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -350,6 +353,7 @@ export function UserMainBack() {
             setSelectedSpecialist(null);
             setOpenModal(false);
             fetchSpecialists(page);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -380,6 +384,7 @@ export function UserMainBack() {
             if (viewMode === "specialists") {
                 fetchSpecialists(page);
             }
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -411,6 +416,7 @@ export function UserMainBack() {
             if (viewMode === "specialists") {
                 fetchSpecialists(page);
             }
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -441,6 +447,7 @@ export function UserMainBack() {
             if (viewMode === "specialists") {
                 fetchSpecialists(page);
             }
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -470,6 +477,7 @@ export function UserMainBack() {
             if (viewMode === "specialists") {
                 fetchSpecialists(page);
             }
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -479,6 +487,7 @@ export function UserMainBack() {
     const createApplication = async (specialistUuid, vacancyUuid) => {
         if (!specialistUuid) {
             setError("Выберите специалиста для отправки отклика");
+            setTimeout(() => setError(null), 3000);
             return;
         }
         try {
@@ -505,15 +514,18 @@ export function UserMainBack() {
             }
             setSuccess("Отклик успешно отправлен");
             setError(null);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
+            setTimeout(() => setError(null), 3000);
         }
     };
 
     const handleLogout = () => {
         logout();
         navigate("/signin");
+        setSelectedSpecialistUuid("");
         setSuccess(null);
         setError(null);
     };
@@ -535,6 +547,7 @@ export function UserMainBack() {
             });
         }
         setOpenModal(true);
+        setSelectedSpecialistUuid("");
         setError(null);
         setSuccess(null);
     };
@@ -555,6 +568,7 @@ export function UserMainBack() {
         setViewMode("vacancies");
         setPage(1);
         fetchVacancies(1);
+        setSelectedSpecialistUuid("");
         setSuccess(null);
         setError(null);
     };
@@ -563,6 +577,7 @@ export function UserMainBack() {
         setViewMode("specialists");
         setPage(1);
         fetchSpecialists(1);
+        setSelectedSpecialistUuid("");
         setSuccess(null);
         setError(null);
     };
@@ -570,11 +585,7 @@ export function UserMainBack() {
     const handleApplicationsClick = () => {
         setViewMode("applications");
         setPage(1);
-        if (selectedSpecialistUuid) {
-            fetchApplications(1, selectedSpecialistUuid);
-        } else {
-            setError("Выберите специалиста для просмотра откликов");
-        }
+        setSelectedSpecialistUuid("");
         setSuccess(null);
         setError(null);
     };
@@ -590,6 +601,7 @@ export function UserMainBack() {
             icon: <PersonIcon sx={{ mr: 1, color: "#283618" }} />,
             onClick: () => {
                 handleOpenModal("profile");
+                setSelectedSpecialistUuid("");
                 setSuccess(null);
                 setError(null);
             },
@@ -599,6 +611,7 @@ export function UserMainBack() {
             icon: <AddCircleIcon sx={{ mr: 1, color: "#283618" }} />,
             onClick: () => {
                 handleOpenModal("specialist");
+                setSelectedSpecialistUuid("");
                 setSuccess(null);
                 setError(null);
             },
@@ -695,29 +708,43 @@ export function UserMainBack() {
                     )}
                     {viewMode === "vacancies" ? (
                         <>
-                            {vacancies.length === 0 && !error && (
+                            {!selectedSpecialistUuid && !error && (
                                 <Typography
                                     variant="body1"
                                     color="text.secondary"
                                 >
-                                    Нет доступных вакансий
+                                    Выберите специалиста для просмотра вакансий
                                 </Typography>
                             )}
-                            {vacancies.map((vacancy) => (
-                                <VacancyCard
-                                    key={vacancy.uuid}
-                                    vacancy={vacancy}
-                                    onApply={createApplication}
-                                    specialistUuid={selectedSpecialistUuid}
-                                />
-                            ))}
-                            {totalVacancies > limit && (
-                                <PaginationComponent
-                                    count={Math.ceil(totalVacancies / limit)}
-                                    page={page}
-                                    onChange={(e, value) => setPage(value)}
-                                />
-                            )}
+                            {selectedSpecialistUuid &&
+                                vacancies.length === 0 &&
+                                !error && (
+                                    <Typography
+                                        variant="body1"
+                                        color="text.secondary"
+                                    >
+                                        Нет доступных вакансий
+                                    </Typography>
+                                )}
+                            {selectedSpecialistUuid &&
+                                vacancies.map((vacancy) => (
+                                    <VacancyCard
+                                        key={vacancy.uuid}
+                                        vacancy={vacancy}
+                                        onApply={createApplication}
+                                        specialistUuid={selectedSpecialistUuid}
+                                    />
+                                ))}
+                            {selectedSpecialistUuid &&
+                                totalVacancies > limit && (
+                                    <PaginationComponent
+                                        count={Math.ceil(
+                                            totalVacancies / limit
+                                        )}
+                                        page={page}
+                                        onChange={(e, value) => setPage(value)}
+                                    />
+                                )}
                         </>
                     ) : viewMode === "specialists" ? (
                         <>

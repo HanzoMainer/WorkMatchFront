@@ -1,11 +1,21 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Modal, Alert, Typography } from "@mui/material";
+import {
+    Box,
+    Modal,
+    Alert,
+    Typography,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+} from "@mui/material";
 import { AuthContext } from "../../../../context/AuthContext";
 import styles from "./style.module.css";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import VacancyCard from "../../components/VacancyCard";
+import ApplicationCardHR from "../../components/ApplicationCardHR";
 import ProfileModalForm from "../../components/ProfileModalForm";
 import VacancyModalForm from "../../components/VacancyModalForm";
 import VacancyDetailsModal from "../../components/VacancyDetailsModal";
@@ -16,6 +26,7 @@ import {
     Logout as LogoutIcon,
     AddCircle as AddCircleIcon,
     List as ListIcon,
+    Bookmark as BookmarkIcon,
 } from "@mui/icons-material";
 
 export function HRMainBack() {
@@ -40,14 +51,18 @@ export function HRMainBack() {
         employment_type_str: "",
     });
     const [selectedVacancy, setSelectedVacancy] = useState(null);
+    const [selectedVacancyUuid, setSelectedVacancyUuid] = useState("");
     const [vacancies, setVacancies] = useState([]);
+    const [applications, setApplications] = useState([]);
     const [totalVacancies, setTotalVacancies] = useState(0);
+    const [totalApplications, setTotalApplications] = useState(0);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [openModal, setOpenModal] = useState(false);
     const [modalType, setModalType] = useState("profile");
     const [page, setPage] = useState(1);
     const [isEditing, setIsEditing] = useState(false);
+    const [viewMode, setViewMode] = useState("vacancies");
     const limit = 5;
 
     const employmentTypes = [
@@ -65,6 +80,11 @@ export function HRMainBack() {
                     "Content-Type": "application/json",
                 },
             });
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось получить данные пользователя`
+                );
+            }
             const data = await response.json();
             setUser(data);
             setEditData({
@@ -72,6 +92,7 @@ export function HRMainBack() {
                 email: data.email || "",
                 username: data.username || "",
             });
+            fetchVacancies(1); 
         } catch (err) {
             setError(err.message);
             if (err.message.includes("Токен")) {
@@ -118,6 +139,73 @@ export function HRMainBack() {
         }
     };
 
+    const fetchApplicationsByVacancy = async (pageNum, vacancyUuid) => {
+        try {
+            const skip = (pageNum - 1) * limit;
+            let token = localStorage.getItem("access_token");
+            let response = await fetch(
+                `http://localhost:8000/v1/applications/vacancy/${vacancyUuid}?skip=${skip}&limit=${limit}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось загрузить отклики`
+                );
+            }
+            const data = await response.json();
+            const applicationsArray = data.applications || [];
+            const total = data.applications?.length || 0;
+
+            const specialistsData = await Promise.all(
+                applicationsArray.map(async (app) => {
+                    let specResponse = await fetch(
+                        `http://localhost:8000/v1/specialist/${app.specialist_uuid}`,
+                        {
+                            method: "GET",
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "application/json",
+                            },
+                        }
+                    );
+                    return specResponse.ok ? await specResponse.json() : null;
+                })
+            );
+
+            const vacancy =
+                vacancies.find((v) => v.uuid === vacancyUuid) ||
+                (await fetch(
+                    `http://localhost:8000/v1/vacancies/${vacancyUuid}`,
+                    {
+                        method: "GET",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                ).then((res) => (res.ok ? res.json() : null)));
+
+            setApplications(
+                applicationsArray.map((app, index) => ({
+                    ...app,
+                    specialist: specialistsData[index],
+                    vacancy,
+                }))
+            );
+            setTotalApplications(total);
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+            setApplications([]);
+        }
+    };
+
     const clearVacancies = () => {
         setVacancies([]);
         setTotalVacancies(0);
@@ -129,6 +217,9 @@ export function HRMainBack() {
         setUser(null);
         setEditData({ full_name: "", email: "", username: "" });
         clearVacancies();
+        setApplications([]);
+        setTotalApplications(0);
+        setSelectedVacancyUuid("");
     };
 
     const updateProfile = async (e) => {
@@ -158,6 +249,7 @@ export function HRMainBack() {
             setUser(data);
             setSuccess("Профиль успешно обновлен");
             setError(null);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -192,6 +284,8 @@ export function HRMainBack() {
             setSuccess("Пароль успешно изменен");
             setError(null);
             setPasswordData({ old_password: "", new_password: "" });
+            setOpenModal(false);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
@@ -245,18 +339,11 @@ export function HRMainBack() {
             });
             setOpenModal(false);
             fetchVacancies(page);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
             setSuccess(null);
         }
-    };
-
-    const handleLogout = () => {
-        clearUserData();
-        logout();
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        navigate("/signin");
     };
 
     const handleSaveChanges = async () => {
@@ -280,11 +367,12 @@ export function HRMainBack() {
                         Accept: "application/json",
                     },
                     body: JSON.stringify({
+                        title: vacancyData.title,
                         description: vacancyData.description,
                         requirements: vacancyData.requirements,
                         conditions: vacancyData.conditions,
                         salary: salary,
-                        employment_type_str: vacancyData.employment_type,
+                        employment_type_str: vacancyData.employment_type_str,
                     }),
                 }
             );
@@ -297,9 +385,18 @@ export function HRMainBack() {
             setSuccess("Вакансия успешно обновлена");
             setIsEditing(false);
             fetchVacancies(page);
+            setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             setError(err.message);
         }
+    };
+
+    const handleLogout = () => {
+        clearUserData();
+        logout();
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        navigate("/signin");
     };
 
     const handleOpenModal = (type, vacancy = null) => {
@@ -347,13 +444,41 @@ export function HRMainBack() {
             salary: selectedVacancy.salary
                 ? selectedVacancy.salary.toString()
                 : "",
-            employment_type: selectedVacancy.employment_type || "",
+            employment_type_str: selectedVacancy.employment_type_str || "",
         });
     };
 
     const handleHomeClick = () => {
+        setViewMode("vacancies");
         clearVacancies();
+        setSuccess(null);
+        setError(null);
         navigate("/hrmain");
+    };
+
+    const handleVacanciesClick = () => {
+        setViewMode("vacancies");
+        fetchVacancies(1);
+        setSuccess(null);
+        setError(null);
+    };
+
+    const handleApplicationsClick = () => {
+        setViewMode("applications");
+        setPage(1);
+        setApplications([]); 
+        setSelectedVacancyUuid("");
+        setSuccess(null);
+        setError(null);
+    };
+
+    const handleViewResponses = (vacancyUuid) => {
+        setViewMode("applications");
+        setSelectedVacancyUuid(vacancyUuid);
+        setPage(1);
+        fetchApplicationsByVacancy(1, vacancyUuid);
+        setSuccess(null);
+        setError(null);
     };
 
     const sidebarItems = [
@@ -365,17 +490,30 @@ export function HRMainBack() {
         {
             label: "Профиль",
             icon: <PersonIcon sx={{ mr: 1, color: "#283618" }} />,
-            onClick: () => handleOpenModal("profile"),
+            onClick: () => {
+                handleOpenModal("profile");
+                setSuccess(null);
+                setError(null);
+            },
         },
         {
             label: "Создать вакансию",
             icon: <AddCircleIcon sx={{ mr: 1, color: "#283618" }} />,
-            onClick: () => handleOpenModal("vacancy"),
+            onClick: () => {
+                handleOpenModal("vacancy");
+                setSuccess(null);
+                setError(null);
+            },
         },
         {
             label: "Мои вакансии",
             icon: <ListIcon sx={{ mr: 1, color: "#283618" }} />,
-            onClick: () => fetchVacancies(page),
+            onClick: handleVacanciesClick,
+        },
+        {
+            label: "Отклики",
+            icon: <BookmarkIcon sx={{ mr: 1, color: "#283618" }} />,
+            onClick: handleApplicationsClick,
         },
         {
             label: "Выйти",
@@ -394,43 +532,131 @@ export function HRMainBack() {
         }
     }, [isAuthenticated, navigate]);
 
+    useEffect(() => {
+        if (viewMode === "vacancies") {
+            fetchVacancies(page);
+        } else if (viewMode === "applications" && selectedVacancyUuid) {
+            fetchApplicationsByVacancy(page, selectedVacancyUuid);
+        }
+    }, [page, viewMode, selectedVacancyUuid]);
+
     return (
         <Box className={styles.loginBackground}>
             <Header user={user} to="/hrmain" />
             <Box className={styles.bodyLeg}>
                 <Sidebar items={sidebarItems} />
                 <Box className={styles.jobList}>
+                    <Typography
+                        variant="h4"
+                        className={styles.font1}
+                        gutterBottom
+                    >
+                        {viewMode === "vacancies"
+                            ? "Мои вакансии"
+                            : "Отклики на вакансии"}
+                    </Typography>
+                    {viewMode === "applications" && (
+                        <FormControl sx={{ mb: 2, minWidth: 200 }}>
+                            <InputLabel>Выберите вакансию</InputLabel>
+                            <Select
+                                value={selectedVacancyUuid}
+                                label="Выберите вакансию"
+                                onChange={(e) => {
+                                    setSelectedVacancyUuid(e.target.value);
+                                    if (e.target.value) {
+                                        fetchApplicationsByVacancy(
+                                            1,
+                                            e.target.value
+                                        );
+                                    } else {
+                                        setApplications([]); 
+                                        setTotalApplications(0);
+                                    }
+                                }}
+                            >
+                                <MenuItem value="">
+                                    <em>Не выбрано</em>
+                                </MenuItem>
+                                {vacancies.map((vacancy) => (
+                                    <MenuItem
+                                        key={vacancy.uuid}
+                                        value={vacancy.uuid}
+                                    >
+                                        {vacancy.title}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    )}
                     {error && (
                         <Alert severity="error" sx={{ mb: 2 }}>
                             {error}
                         </Alert>
                     )}
-                    {vacancies.length === 0 && !error && (
-                        <Typography variant="body1" color="text.secondary">
-                            Нажмите "Мои вакансии" для просмотра
-                        </Typography>
+                    {success && (
+                        <Alert severity="success" sx={{ mb: 2 }}>
+                            {success}
+                        </Alert>
                     )}
-                    {vacancies.map((vacancy) => (
-                        <VacancyCard
-                            key={vacancy.uuid}
-                            vacancy={vacancy}
-                            onInfoClick={() =>
-                                handleOpenModal("vacancyDetails", vacancy)
-                            }
-                            onViewResponses={() =>
-                                console.log("View responses")
-                            } // Замените на реальную функцию
-                        />
-                    ))}
-                    {totalVacancies > 0 && (
-                        <PaginationComponent
-                            count={Math.ceil(totalVacancies / limit)}
-                            page={page}
-                            onChange={(e, value) => {
-                                setPage(value);
-                                fetchVacancies(value);
-                            }}
-                        />
+                    {viewMode === "vacancies" ? (
+                        <>
+                            {vacancies.length === 0 && !error && (
+                                <Typography
+                                    variant="body1"
+                                    color="text.secondary"
+                                >
+                                    Нажмите "Мои вакансии" для просмотра
+                                </Typography>
+                            )}
+                            {vacancies.map((vacancy) => (
+                                <VacancyCard
+                                    key={vacancy.uuid}
+                                    vacancy={vacancy}
+                                    onInfoClick={() =>
+                                        handleOpenModal(
+                                            "vacancyDetails",
+                                            vacancy
+                                        )
+                                    }
+                                    onViewResponses={() =>
+                                        handleViewResponses(vacancy.uuid)
+                                    }
+                                />
+                            ))}
+                            {totalVacancies > 0 && (
+                                <PaginationComponent
+                                    count={Math.ceil(totalVacancies / limit)}
+                                    page={page}
+                                    onChange={(e, value) => setPage(value)}
+                                />
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            {applications.length === 0 && !error && (
+                                <Typography
+                                    variant="body1"
+                                    color="text.secondary"
+                                >
+                                    Нет откликов на выбранную вакансию
+                                </Typography>
+                            )}
+                            {applications.map((application) => (
+                                <ApplicationCardHR
+                                    key={application.o_id}
+                                    application={application}
+                                    specialist={application.specialist}
+                                    vacancy={application.vacancy}
+                                />
+                            ))}
+                            {totalApplications > limit && (
+                                <PaginationComponent
+                                    count={Math.ceil(totalApplications / limit)}
+                                    page={page}
+                                    onChange={(e, value) => setPage(value)}
+                                />
+                            )}
+                        </>
                     )}
                 </Box>
             </Box>
@@ -458,6 +684,7 @@ export function HRMainBack() {
                             error={error}
                             success={success}
                             onCancel={handleCloseModal}
+                            employmentTypes={employmentTypes}
                         />
                     )}
                     {modalType === "vacancyDetails" && selectedVacancy && (
