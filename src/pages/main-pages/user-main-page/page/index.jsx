@@ -68,6 +68,7 @@ export function UserMainBack() {
     const [viewMode, setViewMode] = useState("vacancies");
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [applicationToDelete, setApplicationToDelete] = useState(null);
+    const [searchQuery, setSearchQuery] = useState(""); 
     const limit = 3;
 
     const fetchVacancies = async (pageNum) => {
@@ -584,6 +585,7 @@ export function UserMainBack() {
         logout();
         navigate("/signin");
         setSelectedSpecialistUuid("");
+        setSearchQuery("");
         setSuccess(null);
         setError(null);
     };
@@ -606,6 +608,7 @@ export function UserMainBack() {
         }
         setOpenModal(true);
         setSelectedSpecialistUuid("");
+        setSearchQuery("");
         setError(null);
         setSuccess(null);
     };
@@ -627,6 +630,7 @@ export function UserMainBack() {
         setPage(1);
         fetchVacancies(1);
         setSelectedSpecialistUuid("");
+        setSearchQuery("");
         setSuccess(null);
         setError(null);
     };
@@ -636,6 +640,7 @@ export function UserMainBack() {
         setPage(1);
         fetchSpecialists(1);
         setSelectedSpecialistUuid("");
+        setSearchQuery("");
         setSuccess(null);
         setError(null);
     };
@@ -644,6 +649,7 @@ export function UserMainBack() {
         setViewMode("applications");
         setPage(1);
         setSelectedSpecialistUuid("");
+        setSearchQuery("");
         setSuccess(null);
         setError(null);
     };
@@ -660,6 +666,7 @@ export function UserMainBack() {
             onClick: () => {
                 handleOpenModal("profile");
                 setSelectedSpecialistUuid("");
+                setSearchQuery("");
                 setSuccess(null);
                 setError(null);
             },
@@ -670,6 +677,7 @@ export function UserMainBack() {
             onClick: () => {
                 handleOpenModal("specialist");
                 setSelectedSpecialistUuid("");
+                setSearchQuery("");
                 setSuccess(null);
                 setError(null);
             },
@@ -691,6 +699,30 @@ export function UserMainBack() {
         },
     ];
 
+    const filteredVacancies = vacancies.filter(
+        (vacancy) =>
+            vacancy.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            vacancy.description
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase())
+    );
+
+    const filteredSpecialists = specialists.filter(
+        (specialist) =>
+            specialist.position
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+            specialist.about_me
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase())
+    );
+
+    const filteredApplications = applications.filter((application) =>
+        application.vacancy?.title
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase())
+    );
+
     useEffect(() => {
         if (isAuthenticated) {
             fetchUserData();
@@ -708,7 +740,12 @@ export function UserMainBack() {
 
     return (
         <Box className={styles.loginBackground}>
-            <Header user={user} to="/usermain" />
+            <Header
+                user={user}
+                to="/usermain"
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+            />
             <Box className={styles.bodyLeg}>
                 <Sidebar items={sidebarItems} />
                 <Box className={styles.jobList}>
@@ -775,7 +812,7 @@ export function UserMainBack() {
                                 </Typography>
                             )}
                             {selectedSpecialistUuid &&
-                                vacancies.length === 0 &&
+                                filteredVacancies.length === 0 &&
                                 !error && (
                                     <Typography
                                         variant="body1"
@@ -785,7 +822,7 @@ export function UserMainBack() {
                                     </Typography>
                                 )}
                             {selectedSpecialistUuid &&
-                                vacancies.map((vacancy) => (
+                                filteredVacancies.map((vacancy) => (
                                     <VacancyCard
                                         key={vacancy.uuid}
                                         vacancy={vacancy}
@@ -806,7 +843,7 @@ export function UserMainBack() {
                         </>
                     ) : viewMode === "specialists" ? (
                         <>
-                            {specialists.length === 0 && !error && (
+                            {filteredSpecialists.length === 0 && !error && (
                                 <Typography
                                     variant="body1"
                                     color="text.secondary"
@@ -814,7 +851,7 @@ export function UserMainBack() {
                                     Вы пока не создали специалистов
                                 </Typography>
                             )}
-                            {specialists.map((specialist) => (
+                            {filteredSpecialists.map((specialist) => (
                                 <SpecialistCard
                                     key={specialist.uuid}
                                     specialist={specialist}
@@ -840,7 +877,7 @@ export function UserMainBack() {
                         </>
                     ) : (
                         <>
-                            {applications.length === 0 && !error && (
+                            {filteredApplications.length === 0 && !error && (
                                 <Typography
                                     variant="body1"
                                     color="text.secondary"
@@ -848,7 +885,7 @@ export function UserMainBack() {
                                     Нет отправленных откликов
                                 </Typography>
                             )}
-                            {applications.map((application) => (
+                            {filteredApplications.map((application) => (
                                 <ApplicationCard
                                     key={application.o_id}
                                     application={application}
@@ -861,6 +898,13 @@ export function UserMainBack() {
                                     }
                                 />
                             ))}
+                            {totalApplications > limit && (
+                                <PaginationComponent
+                                    count={Math.ceil(totalApplications / limit)}
+                                    page={page}
+                                    onChange={(e, value) => setPage(value)}
+                                />
+                            )}
                         </>
                     )}
                 </Box>
