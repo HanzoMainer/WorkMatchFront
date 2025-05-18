@@ -1,7 +1,19 @@
-import { Card, CardContent, Typography, Chip, Box } from "@mui/material";
+import {
+    Card,
+    CardContent,
+    Typography,
+    Chip,
+    Box,
+    Button,
+} from "@mui/material";
 import styles from "./../hr-main-page/page/style.module.css";
 
-const ApplicationCardHR = ({ application, specialist, vacancy }) => {
+const ApplicationCardHR = ({
+    application,
+    specialist,
+    vacancy,
+    onViewAnalysis,
+}) => {
     return (
         <Card
             className={styles.jobCard}
@@ -95,6 +107,18 @@ const ApplicationCardHR = ({ application, specialist, vacancy }) => {
                         </Typography>
                     )}
                 </Box>
+                <Button
+                    variant="outlined"
+                    onClick={() =>
+                        onViewAnalysis(
+                            application.specialist_uuid,
+                            application.vacancy_uuid
+                        )
+                    }
+                    sx={{ mt: 2, color: "#283618", borderColor: "#283618" }}
+                >
+                    Просмотреть аналитику
+                </Button>
             </CardContent>
         </Card>
     );

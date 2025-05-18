@@ -19,6 +19,7 @@ import ApplicationCardHR from "../../components/ApplicationCardHR";
 import ProfileModalForm from "../../components/ProfileModalForm";
 import VacancyModalForm from "../../components/VacancyModalForm";
 import VacancyDetailsModal from "../../components/VacancyDetailsModal";
+import AnalysisModal from "../../components/AnalysisModal";
 import PaginationComponent from "../../components/PaginationComponent";
 import {
     Home as HomeIcon,
@@ -63,6 +64,8 @@ export function HRMainBack() {
     const [page, setPage] = useState(1);
     const [isEditing, setIsEditing] = useState(false);
     const [viewMode, setViewMode] = useState("vacancies");
+    const [analysisData, setAnalysisData] = useState(null);
+    const [openAnalysisModal, setOpenAnalysisModal] = useState(false);
     const limit = 5;
 
     const employmentTypes = [
@@ -160,6 +163,7 @@ export function HRMainBack() {
             }
             const data = await response.json();
             const applicationsArray = data.applications || [];
+            console.log("Applications fetched:", applicationsArray);
             const total = data.applications?.length || 0;
 
             const specialistsData = await Promise.all(
@@ -203,6 +207,43 @@ export function HRMainBack() {
         } catch (err) {
             setError(err.message);
             setApplications([]);
+        }
+    };
+
+    const fetchAnalysis = async (specialistUuid, vacancyUuid) => {
+        try {
+            const token = localStorage.getItem("access_token");
+            const response = await fetch(
+                `http://localhost:8000/v1/analyse/${specialistUuid}/${vacancyUuid}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                    },
+                }
+            );
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка ${response.status}: Не удалось получить аналитику`
+                );
+            }
+            const data = await response.json();
+            return data;
+        } catch (err) {
+            setError(err.message);
+            return null;
+        }
+    };
+
+    const handleViewAnalysis = async (specialistUuid, vacancyUuid) => {
+        const data = await fetchAnalysis(specialistUuid, vacancyUuid);
+        if (data) {
+            setAnalysisData(data);
+            setOpenAnalysisModal(true);
+        } else {
+            console.log("No data returned from fetchAnalysis");
         }
     };
 
@@ -678,6 +719,7 @@ export function HRMainBack() {
                                     application={application}
                                     specialist={application.specialist}
                                     vacancy={application.vacancy}
+                                    onViewAnalysis={handleViewAnalysis}
                                 />
                             ))}
                             {totalApplications > limit && (
@@ -720,7 +762,7 @@ export function HRMainBack() {
                     )}
                     {modalType === "vacancyDetails" && selectedVacancy && (
                         <VacancyDetailsModal
-                            selectedVacancy={selectedVacancy}
+                            selectedVacancy={SelectedVacancy}
                             isEditing={isEditing}
                             vacancyData={vacancyData}
                             setVacancyData={setVacancyData}
@@ -735,6 +777,12 @@ export function HRMainBack() {
                     )}
                 </Box>
             </Modal>
+            <AnalysisModal
+                open={openAnalysisModal}
+                onClose={() => setOpenAnalysisModal(false)}
+                analysisData={analysisData}
+                error={error}
+            />
         </Box>
     );
 }
