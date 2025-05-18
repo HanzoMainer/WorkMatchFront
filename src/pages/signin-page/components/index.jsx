@@ -13,6 +13,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
+import Alert from "@mui/material/Alert";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../../context/AuthContext";
 
@@ -53,6 +54,7 @@ export function SignInBack() {
                 console.log("Успешный вход:", result);
                 signin(result.access_token, result.refresh_token);
                 setSuccess("Вход успешен!");
+                setError(null);
 
                 const userInfoResponse = await fetch(
                     "http://localhost:8000/v1/users/me/",
@@ -78,16 +80,25 @@ export function SignInBack() {
                     setTimeout(() => navigate("/usermain"), 0);
                 }
             } else {
-                const error = await response.json();
-                console.error("Ошибка входа:", error);
-                setError(
-                    "Ошибка входа: " +
-                        (error.detail || "Неверные учетные данные")
-                );
+                const errorData = await response.json();
+                console.error("Ошибка входа:", errorData);
+                let errorMessage;
+                if (Array.isArray(errorData.detail)) {
+                    errorMessage = errorData.detail
+                        .map((err) => err.msg || "Неизвестная ошибка")
+                        .join(", ");
+                } else if (typeof errorData.detail === "string") {
+                    errorMessage = errorData.detail;
+                } else {
+                    errorMessage = "Неверные учетные данные";
+                }
+                setError("Ошибка входа: " + errorMessage);
+                setSuccess(null);
             }
         } catch (error) {
             console.error("Ошибка соединения:", error);
             setError("Сервер недоступен");
+            setSuccess(null);
         }
     };
 
@@ -146,6 +157,22 @@ export function SignInBack() {
                 <div className={styles.bodyLeg}>
                     <div className={styles.subLogin}>
                         <div className={styles.buttonContainer}>
+                            {error && (
+                                <Alert
+                                    severity="error"
+                                    sx={{ width: "100%", mb: 2 }}
+                                >
+                                    {error}
+                                </Alert>
+                            )}
+                            {success && (
+                                <Alert
+                                    severity="success"
+                                    sx={{ width: "100%", mb: 2 }}
+                                >
+                                    {success}
+                                </Alert>
+                            )}
                             <div className={styles.button}>
                                 <TextField
                                     label="Email"

@@ -99,7 +99,10 @@ export function SignUpBack() {
             );
 
             if (!loginResponse.ok) {
-                throw new Error("Ошибка входа после регистрации");
+                const errorData = await loginResponse.json();
+                throw new Error(
+                    errorData.detail || "Ошибка входа после регистрации"
+                );
             }
 
             const result = await loginResponse.json();
@@ -112,7 +115,10 @@ export function SignUpBack() {
             });
         } catch (error) {
             console.error("Ошибка:", error.message);
-            setError(error.message);
+            const errorMessage = Array.isArray(error.message)
+                ? error.message.join(", ")
+                : error.message;
+            setError(errorMessage);
         }
     };
 
@@ -136,6 +142,48 @@ export function SignUpBack() {
             <div className={styles.bodyLeg}>
                 <div className={styles.subLogin}>
                     <div className={styles.buttonContainer}>
+                        {error && (
+                            <Alert
+                                severity="error"
+                                sx={{
+                                    mt: 2,
+                                    width: {
+                                        xs: "100%",
+                                        sm: "80%",
+                                        md: "60%",
+                                        lg: "46%",
+                                    },
+                                    mx: "auto",
+                                }}
+                            >
+                                {Array.isArray(error) ? (
+                                    <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                        {error.map((err, index) => (
+                                            <li key={index}>{err}</li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    error
+                                )}
+                            </Alert>
+                        )}
+                        {success && (
+                            <Alert
+                                severity="success"
+                                sx={{
+                                    mt: 2,
+                                    width: {
+                                        xs: "100%",
+                                        sm: "80%",
+                                        md: "60%",
+                                        lg: "46%",
+                                    },
+                                    mx: "auto",
+                                }}
+                            >
+                                {success}
+                            </Alert>
+                        )}
                         <div className={styles.button}>
                             <Box
                                 component="form"
@@ -331,40 +379,6 @@ export function SignUpBack() {
                                 Уже есть аккаунт?
                             </Link>
                         </div>
-                        {error && (
-                            <Alert
-                                severity="error"
-                                sx={{
-                                    mt: 2,
-                                    width: {
-                                        xs: "100%",
-                                        sm: "80%",
-                                        md: "60%",
-                                        lg: "46%",
-                                    },
-                                    mx: "auto",
-                                }}
-                            >
-                                {error}
-                            </Alert>
-                        )}
-                        {success && (
-                            <Alert
-                                severity="success"
-                                sx={{
-                                    mt: 2,
-                                    width: {
-                                        xs: "100%",
-                                        sm: "80%",
-                                        md: "60%",
-                                        lg: "46%",
-                                    },
-                                    mx: "auto",
-                                }}
-                            >
-                                {success}
-                            </Alert>
-                        )}
                     </div>
                 </div>
             </div>
@@ -385,6 +399,25 @@ export function SignUpBack() {
                     <Typography variant="h6" gutterBottom>
                         Выберите роль
                     </Typography>
+                    {error && (
+                        <Alert
+                            severity="error"
+                            sx={{
+                                mb: 2,
+                                width: "100%",
+                            }}
+                        >
+                            {Array.isArray(error) ? (
+                                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                    {error.map((err, index) => (
+                                        <li key={index}>{err}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                error
+                            )}
+                        </Alert>
+                    )}
                     <RadioGroup
                         value={selectedRole}
                         onChange={(e) => setSelectedRole(e.target.value)}
@@ -393,12 +426,13 @@ export function SignUpBack() {
                             value="user"
                             control={<Radio />}
                             label="Пользователь"
-                            color="black"
+                            sx={{ color: "black" }}
                         />
                         <FormControlLabel
                             value="hr"
                             control={<Radio />}
                             label="HR"
+                            sx={{ color: "black" }}
                         />
                     </RadioGroup>
                     <Box sx={{ mt: 2, display: "flex", gap: 2 }}>
@@ -415,7 +449,11 @@ export function SignUpBack() {
                         <Button
                             variant="outlined"
                             onClick={() => setOpenModal(false)}
-                            color="#4F5A2E"
+                            sx={{
+                                borderColor: "#4F5A2E",
+                                color: "#4LotF5A2E",
+                                "&:hover": { borderColor: "#606C38" },
+                            }}
                         >
                             Отмена
                         </Button>

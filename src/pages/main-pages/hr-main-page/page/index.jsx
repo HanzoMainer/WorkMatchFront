@@ -762,7 +762,7 @@ export function HRMainBack() {
                     )}
                     {modalType === "vacancyDetails" && selectedVacancy && (
                         <VacancyDetailsModal
-                            selectedVacancy={SelectedVacancy}
+                            selectedVacancy={selectedVacancy}
                             isEditing={isEditing}
                             vacancyData={vacancyData}
                             setVacancyData={setVacancyData}
