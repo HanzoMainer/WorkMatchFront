@@ -310,7 +310,9 @@ export function SignUpBack() {
                                             setPassword(e.target.value)
                                         }
                                         endAdornment={
-                                            <InputAdornment position="end">
+                                            <InputAdornment position="end" sx={{
+                                                mr: 1
+                                            }}>
                                                 <IconButton
                                                     aria-label={
                                                         showPassword
