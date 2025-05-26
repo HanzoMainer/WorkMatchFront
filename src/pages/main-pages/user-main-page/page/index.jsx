@@ -25,6 +25,8 @@ import ApplicationCard from "../../components/ApplicationCard";
 import ProfileModalForm from "../../components/ProfileModalForm";
 import SpecialistModalForm from "../../components/SpecialistModalForm";
 import PaginationComponent from "../../components/PaginationComponent";
+import LoadingScreen from "../../components/LoadingScreen";
+import SummaryModal from "../../components/SummaryModalForm";
 import {
     Home as HomeIcon,
     Person as PersonIcon,
@@ -69,6 +71,9 @@ export function UserMainBack() {
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [applicationToDelete, setApplicationToDelete] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [loadingSummary, setLoadingSummary] = useState(false);
+    const [vacancySummary, setVacancySummary] = useState("");
+    const [openSummaryModal, setOpenSummaryModal] = useState(false);
     const limit = 3;
 
     const fetchVacancies = async (pageNum, query = "") => {
@@ -334,8 +339,7 @@ export function UserMainBack() {
         try {
             let token = localStorage.getItem("access_token");
             let response = await fetch(
-                `http://localhost:8000/v1/specialist/${specialistUuid}
-                `,
+                `http://localhost:8000/v1/specialist/${specialistUuid}`,
                 {
                     method: "DELETE",
                     headers: {
@@ -595,36 +599,90 @@ export function UserMainBack() {
         }
     };
 
-    const searchVacancies = async (query, skip, limit) => {
+    const fetchVacancySummary = async (vacancyUuid) => {
         try {
+            setLoadingSummary(true);
             let token = localStorage.getItem("access_token");
-            let response = await fetch(
-                `http://localhost:8000/v1/vacancies/search?query=${query}&skip=${skip}&limit=${limit}`,
-                {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
+
+            const delay = new Promise((resolve) => setTimeout(resolve, 3000));
+
+            const mockResponsePromise = new Promise((resolve) =>
+                setTimeout(() => {
+                    const vacancy = vacancies.find(
+                        (v) => v.uuid === vacancyUuid
+                    );
+                    const title = vacancy?.title
+                        ? String(vacancy.title).trim()
+                        : "вакансия";
+                    const summary = `Краткое описание: ${title}. Это текст заглушка, для моей проверки, удали всю переменную запроса. ДАВАЙ. О проектах: Мобильное приложение, создано для управления роботизированными тахеометрами, приемниками GNSS и Layout Navigator; Прикладное ПО, которое позволяет вам собирать данные картографирования и выполнять строительство и планировку дорог с использованием тахеметров, нивелиров и приемников GNS; Инструменты для проектов строительства; ПО для обработки и настройки данных. привет.`;
+                    resolve({ summary });
+                }, 1000)
             );
-            if (!response.ok) {
-                throw new Error(
-                    `Ошибка ${response.status}: Не удалось выполнить поиск`
-                );
-            }
-            setSuccess("Поиск выполнен успешно");
-            const data = await response.json();
-            setVacancies(data.Vacancies || []);
-            setTotalVacancies(data.Count || 0);
-            setTimeout(() => setSuccess(null), 3000);
+
+            const [mockResponse] = await Promise.all([
+                mockResponsePromise,
+                delay,
+            ]);
+
+            setVacancySummary(mockResponse.summary);
+            setOpenSummaryModal(true);
+            setError(null);
         } catch (err) {
             setError(err.message);
-            setSuccess(null);
             setTimeout(() => setError(null), 3000);
+        } finally {
+            setLoadingSummary(false);
         }
     };
+    /*
+    //УДАЛИТЬ ПРОШЛУЮ ФУНКЦИЮ fetchVacancySummary И РАСКОММЕНТИРОВАТЬ ЭТУ
 
+
+    const fetchVacancySummary = async (vacancyUuid) => {
+    try {
+        setLoadingSummary(true);
+        let token = localStorage.getItem("access_token");
+
+        const delay = new Promise((resolve) => setTimeout(resolve, 3000));
+
+        const apiResponsePromise = fetch(
+            `<ТУТ ЗАПРОС НА ЭНДПОИНТ>`,
+            {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        ).then(async (response) => {
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(
+                    `Ошибка ${response.status}: ${
+                        errorData.message || "Не удалось получить краткую информацию"
+                    }`
+                );
+            }
+            return response.json();
+        });
+
+        const [apiResponse] = await Promise.all([apiResponsePromise, delay]);
+
+        const summary = apiResponse.summary
+            ? String(apiResponse.summary).trim()
+            : "Краткое описание недоступно";
+
+        setVacancySummary(summary);
+        setOpenSummaryModal(true);
+        setError(null);
+    } catch (err) {
+        setError(err.message);
+        setTimeout(() => setError(null), 3000);
+    } finally {
+        setLoadingSummary(false);
+    }
+};
+*/
     const handleOpenDeleteDialog = (specialistUuid, vacancyUuid) => {
         setApplicationToDelete({ specialistUuid, vacancyUuid });
         setOpenDeleteDialog(true);
@@ -802,7 +860,7 @@ export function UserMainBack() {
         const skip = (page - 1) * limit;
         try {
             let token = localStorage.getItem("access_token");
-            let url;
+            let url = "";
 
             if (viewMode === "vacancies") {
                 url = `http://localhost:8000/v1/vacancies/search?query=${encodeURIComponent(
@@ -940,7 +998,7 @@ export function UserMainBack() {
                             {success}
                         </Alert>
                     )}
-                    {viewMode === "vacancies" ? (
+                    {viewMode === "vacancies" && (
                         <>
                             {!selectedSpecialistUuid && !error && (
                                 <Typography
@@ -961,12 +1019,13 @@ export function UserMainBack() {
                                     </Typography>
                                 )}
                             {selectedSpecialistUuid &&
-                                vacancies.map((vacancy) => (
+                                filteredVacancies.map((vacancy) => (
                                     <VacancyCard
                                         key={vacancy.uuid}
                                         vacancy={vacancy}
                                         onApply={createApplication}
                                         specialistUuid={selectedSpecialistUuid}
+                                        onSummaryClick={fetchVacancySummary}
                                     />
                                 ))}
                             {selectedSpecialistUuid &&
@@ -980,7 +1039,8 @@ export function UserMainBack() {
                                     />
                                 )}
                         </>
-                    ) : viewMode === "specialists" ? (
+                    )}
+                    {viewMode === "specialists" && (
                         <>
                             {filteredSpecialists.length === 0 && !error && (
                                 <Typography
@@ -1004,7 +1064,9 @@ export function UserMainBack() {
                                     onDeleteSkill={deleteSkill}
                                     onAddExperience={addExperience}
                                     onDeleteExperience={deleteExperience}
-                                    onDelete={deleteSpecialist}
+                                    onDelete={() =>
+                                        deleteSpecialist(specialist.uuid)
+                                    }
                                 />
                             ))}
                             {totalSpecialists > limit && (
@@ -1015,7 +1077,8 @@ export function UserMainBack() {
                                 />
                             )}
                         </>
-                    ) : (
+                    )}
+                    {viewMode === "applications" && (
                         <>
                             {filteredApplications.length === 0 && !error && (
                                 <Typography
@@ -1048,6 +1111,15 @@ export function UserMainBack() {
                         </>
                     )}
                 </Box>
+                {loadingSummary && <LoadingScreen />}
+                <SummaryModal
+                    open={openSummaryModal}
+                    onClose={() => {
+                        setOpenSummaryModal(false);
+                        setVacancySummary("");
+                    }}
+                    summary={vacancySummary}
+                />
             </Box>
             <Modal open={openModal} onClose={handleCloseModal}>
                 <Box>

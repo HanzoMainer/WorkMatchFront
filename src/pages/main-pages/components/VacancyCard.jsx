@@ -8,6 +8,7 @@ import {
 import {
     Info as InfoIcon,
     Bookmark as BookmarkIcon,
+    Summarize as SummarizeIcon,
 } from "@mui/icons-material";
 import styles from "./../hr-main-page/page/style.module.css";
 
@@ -18,6 +19,7 @@ const VacancyCard = ({
     onApply,
     specialistUuid,
     deleteVacancy,
+    onSummaryClick,
 }) => {
     return (
         <Card
@@ -104,6 +106,46 @@ const VacancyCard = ({
                         onClick={() => deleteVacancy(vacancy.uuid)}
                     >
                         Удалить
+                    </Button>
+                )}
+                {onSummaryClick && (
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<SummarizeIcon />}
+                        onClick={() => onSummaryClick(vacancy.uuid)}
+                        sx={{
+                            borderRadius: "8px",
+                            border: "2px solid",
+                            borderColor: "transparent",
+                            background: "transparent",
+                            color: "#fefae0",
+                            backgroundImage:
+                                "linear-gradient(45deg, #283618, #606c38, #283618, #606c38)",
+                            backgroundSize: "200% 200%",
+                            animation: "gradientShift 3s ease infinite",
+                            "&:hover": {
+                                boxShadow: "0 12px 20px rgba(0, 0, 0, 0.3)",
+                                transform: "translateY(-2px)",
+                                transition: "all 0.3s ease",
+                            },
+                            "@keyframes gradientShift": {
+                                "0%": { backgroundPosition: "0% 50%" },
+                                "50%": { backgroundPosition: "100% 50%" },
+                                "100%": { backgroundPosition: "0% 50%" },
+                            },
+                            "& .MuiButton-label": {
+                                background:
+                                    "linear-gradient(45deg, #283618, #606c38, #283618, #606c38)",
+                                backgroundSize: "200% 200%",
+                                animation: "gradientShift 3s ease infinite",
+                                WebkitBackgroundClip: "text",
+                                WebkitTextFillColor: "transparent",
+                            },
+                            transition: "all 0.3s ease",
+                        }}
+                    >
+                        Кратко о вакансии
                     </Button>
                 )}
             </CardActions>
