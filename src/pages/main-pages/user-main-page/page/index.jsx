@@ -606,25 +606,38 @@ export function UserMainBack() {
 
             const delay = new Promise((resolve) => setTimeout(resolve, 3000));
 
-            const mockResponsePromise = new Promise((resolve) =>
-                setTimeout(() => {
-                    const vacancy = vacancies.find(
-                        (v) => v.uuid === vacancyUuid
+            const apiResponsePromise = fetch(
+                `http://localhost:8000/v1/analyse/summarize/${vacancyUuid}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            ).then(async (response) => {
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(
+                        `Ошибка ${response.status}: ${
+                            errorData.message ||
+                            "Не удалось получить краткую информацию"
+                        }`
                     );
-                    const title = vacancy?.title
-                        ? String(vacancy.title).trim()
-                        : "вакансия";
-                    const summary = `Краткое описание: ${title}. Это текст заглушка, для моей проверки, удали всю переменную запроса. ДАВАЙ. О проектах: Мобильное приложение, создано для управления роботизированными тахеометрами, приемниками GNSS и Layout Navigator; Прикладное ПО, которое позволяет вам собирать данные картографирования и выполнять строительство и планировку дорог с использованием тахеметров, нивелиров и приемников GNS; Инструменты для проектов строительства; ПО для обработки и настройки данных. привет.`;
-                    resolve({ summary });
-                }, 1000)
-            );
+                }
+                return response.json();
+            });
 
-            const [mockResponse] = await Promise.all([
-                mockResponsePromise,
+            const [apiResponse] = await Promise.all([
+                apiResponsePromise,
                 delay,
             ]);
 
-            setVacancySummary(mockResponse.summary);
+            const summary = apiResponse
+                ? String(apiResponse).trim()
+                : "Краткое описание недоступно";
+
+            setVacancySummary(summary);
             setOpenSummaryModal(true);
             setError(null);
         } catch (err) {
@@ -634,55 +647,6 @@ export function UserMainBack() {
             setLoadingSummary(false);
         }
     };
-    /*
-    //УДАЛИТЬ ПРОШЛУЮ ФУНКЦИЮ fetchVacancySummary И РАСКОММЕНТИРОВАТЬ ЭТУ
-
-
-    const fetchVacancySummary = async (vacancyUuid) => {
-    try {
-        setLoadingSummary(true);
-        let token = localStorage.getItem("access_token");
-
-        const delay = new Promise((resolve) => setTimeout(resolve, 3000));
-
-        const apiResponsePromise = fetch(
-            `<ТУТ ЗАПРОС НА ЭНДПОИНТ>`,
-            {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            }
-        ).then(async (response) => {
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(
-                    `Ошибка ${response.status}: ${
-                        errorData.message || "Не удалось получить краткую информацию"
-                    }`
-                );
-            }
-            return response.json();
-        });
-
-        const [apiResponse] = await Promise.all([apiResponsePromise, delay]);
-
-        const summary = apiResponse.summary
-            ? String(apiResponse.summary).trim()
-            : "Краткое описание недоступно";
-
-        setVacancySummary(summary);
-        setOpenSummaryModal(true);
-        setError(null);
-    } catch (err) {
-        setError(err.message);
-        setTimeout(() => setError(null), 3000);
-    } finally {
-        setLoadingSummary(false);
-    }
-};
-*/
     const handleOpenDeleteDialog = (specialistUuid, vacancyUuid) => {
         setApplicationToDelete({ specialistUuid, vacancyUuid });
         setOpenDeleteDialog(true);
