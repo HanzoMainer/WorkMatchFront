@@ -115,8 +115,6 @@ const VacancyCard = ({
                         startIcon={<SummarizeIcon />}
                         onClick={() => onSummaryClick(vacancy.uuid)}
                         sx={{
-                            borderRadius: "8px",
-                            border: "2px solid",
                             borderColor: "transparent",
                             background: "transparent",
                             color: "#fefae0",

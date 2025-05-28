@@ -72,16 +72,10 @@ const Header = ({
                             mt: 3,
                             width: "50%",
                             "& .MuiOutlinedInput-root": {
-                                backgroundColor: "#fefae0",
+                                backgroundColor: "white",
                                 color: "#283618",
                                 "& fieldset": {
-                                    borderColor: "#606c38",
-                                },
-                                "&:hover fieldset": {
-                                    borderColor: "#283618",
-                                },
-                                "&.Mui-focused fieldset": {
-                                    borderColor: "#283618",
+                                    border: "none",
                                 },
                             },
                             "& .MuiInputBase-input": {

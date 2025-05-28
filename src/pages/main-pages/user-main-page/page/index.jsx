@@ -923,7 +923,13 @@ export function UserMainBack() {
                     </Typography>
                     {(viewMode === "vacancies" ||
                         viewMode === "applications") && (
-                        <FormControl sx={{ mb: 2, minWidth: 200 }}>
+                        <FormControl
+                            sx={{
+                                mb: 2,
+                                minWidth: 200,
+                                backgroundColor: "white",
+                            }}
+                        >
                             <InputLabel>Выберите специалиста</InputLabel>
                             <Select
                                 value={selectedSpecialistUuid}

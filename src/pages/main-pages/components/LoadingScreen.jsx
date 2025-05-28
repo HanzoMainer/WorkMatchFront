@@ -19,7 +19,7 @@ const LoadingScreen = () => (
         <Box
             sx={{
                 textAlign: "center",
-                backgroundColor: "#fefae0",
+                backgroundColor: "white",
                 borderRadius: 2,
                 p: 4,
                 boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)",
